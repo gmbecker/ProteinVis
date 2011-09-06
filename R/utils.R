@@ -29,3 +29,14 @@ combineTMDomains = function(tmdf, poscols = c("start", "end"))
     tmmat
   }
 
+calcPlotHeight = function(baseheight, type = "metaCount", pfam)
+  {
+    myPFIRanges = IRanges(start = pfam$start, end = pfam$end)
+    bins = disjointBins(myPFIRanges)
+    denom = if(type == "metaCount")
+      4.45
+    else
+      2.45
+
+    baseheight * (1 + .25/denom * max(bins))
+  }

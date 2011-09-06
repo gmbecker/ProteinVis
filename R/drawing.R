@@ -307,7 +307,7 @@ proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmpo
            layout = c(1, 3),
            xlim = xlim,
            main = main,
-           par.settings = list(layout.heights = list(panel = c(.3 + .25*max(pfamBins), .4, 1.5, 2)))
+           par.settings = list(layout.heights = list(panel = c(.3 + .25*max(pfamBins), .4, 1.5)))
            )
     if(draw)
       print(cplot)

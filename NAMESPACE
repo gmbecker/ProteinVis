@@ -1,3 +1,4 @@
 export( metaCountStructPlot,
        proteinStructPlot,
-       panel.metaCount)
+       panel.metaCount,
+       calcPlotHeight)
