@@ -38,5 +38,5 @@ calcPlotHeight = function(baseheight, type = "metaCount", pfam)
     else
       2.45
 
-    baseheight * (1 + .25/denom * max(bins))
+    baseheight * (1 + .25/denom * ( max(bins) - 1) )
   }
