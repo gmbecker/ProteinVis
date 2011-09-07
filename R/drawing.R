@@ -241,7 +241,14 @@ panel.metaCount = function(x, y, subscripts, patientid, scale.factor = 8, logsca
     patientid = patientid[subscripts]
     grid.rect(.5, .5, 1, 1, gp = gpar(fill = "grey95"))
     
+
     ylevs = unique(y)
+    missingCat = which(is.na(y))
+    tmpcat = as.character(y)
+    tmpcat[missingCat] = "UnCategorized"
+    y = factor(tmpcat)
+    ylevs = unique(y)
+    
     scaleseq = seq(min(as.integer(ylevs)) - .5, max(as.integer(ylevs)) + .5, by = 1/2)
     grid.segments(unit(0, "npc"), scaleseq, unit(1, "npc"), scaleseq, default.units = "native", gp = gpar(col = c("black", "grey50"), lex = c(1.5, 1)))
     ylim = current.panel.limits()$ylim
