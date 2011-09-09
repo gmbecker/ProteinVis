@@ -60,7 +60,9 @@ panel.psipred = function(x, y, subscripts, cutoff, strand, ...)
 drawPsipred = function(dat, cutoff, xlim)
   {
     grid.text("Secondary Structure", unit(1, "char"), .75, just = "left")
-    grid.lines(unit(xlim, "native"), unit(.25, "npc"), gp = gpar(col = "grey50", lex = 1.5))
+    yline = .3
+    height = .3
+    grid.lines(unit(xlim, "native"), unit(yline, "npc"), gp = gpar(col = "grey50", lex = 1.5))
     datlag = dat[-1,]
     
     change.helix = which((datlag$helix >= cutoff) != (dat$helix[-nrow(dat)] >= cutoff))
@@ -83,7 +85,7 @@ drawPsipred = function(dat, cutoff, xlim)
     for(i in seq(1, length(change.helix) - 1, by = 2))
       {
         if (change.helix[i+1] - change.helix[i] >= 10)
-          drawCoil(change.helix[i], change.helix[i+1], height = .35, center.y = .25, gp = gpar(fill = "red", alpha = .5), scorecol = "black")
+          drawCoil(change.helix[i], change.helix[i+1], height = height, center.y = yline, gp = gpar(fill = "red", alpha = .5), scorecol = "black")
       }
   }
     if(length(change.strand) >= 2)
@@ -93,7 +95,7 @@ drawPsipred = function(dat, cutoff, xlim)
       {
         if(change.strand[j+1] - change.strand[j] >= 10)
           
-          drawArrow(change.strand[j], change.strand[j + 1], height = .35, center.y = .25, fill = "blue")
+          drawArrow(change.strand[j], change.strand[j + 1], height = height, center.y = yline, fill = "blue")
       }
   }
     TRUE
@@ -196,7 +198,7 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
             #.45 for one row ...
             step = .6/nrow
             ypos = 1 - (.15 / nrow ) - step*bin
-            grid.lines(unit(c(st, end), "native"), unit(nrow - bin + 1, "native"), gp = gpar(col = col, lex = 20))
+            grid.lines(unit(c(st, end), "native"), unit(nrow - bin + 1, "native"), gp = gpar(col = col, lex = 20, alpha=.5))
             grid.text(lab, unit((st + end) /2, "native"), y = unit(nrow - bin + 1 , "native") - unit(1, "char") , rot = rot)
 
           },  poscolumns = poscolumns, nrow = nrow, protlen = protlen)
@@ -265,8 +267,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     if(length(indels))
       {
         indeldat = data.frame( start = x[indels], end = end[indels], category = y[indels])
-        print(class(indeldat))
-                                        #now remove indels and plot snps as before
+                                          #now remove indels and plot snps as before
         x=x[-indels]
         y = y[-indels]
       }
@@ -299,9 +300,9 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  n = myl$samplesize
                                         #browser()
                  if(logscale)
-                   heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor)
+                   heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / ( 2 * scale.factor))
                  else
-                   heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / scale.factor )
+                   heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / (2 * scale.factor ))
                  if (at.baseline)
                    {
                      ypos = as.integer(y) - .5
@@ -315,9 +316,9 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  colinds = sapply(p, function(x) min(ceiling(x / legend.step), 11))
 
              
-                 grid.rect(as.numeric(names(counts)), ypos, vjust = vjust, default.units = "native", 5, heights, gp = gpar(fill = colpalette[colinds]), )
+                 grid.rect(as.numeric(names(counts)), y, vjust = vjust, default.units = "native", 5, heights, gp = gpar(fill = colpalette[colinds]), )
                } else
-             grid.text("NO DATA", unit(.5, "npc"), unit(as.integer(y) - .5, "native"))
+             grid.text("NO DATA", unit(.5, "npc"), unit(as.integer(y) , "native"))
            })
 
         #now add indels
@@ -340,13 +341,12 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  else
                    {
                      if(logscale)
-                       .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor
+                       .05 + .9 * min( log( x, base = logbase), scale.factor ) / ( 2 * scale.factor)
                  else
-                   .9 * min( x, scale.factor ) / scale.factor
+                   .9 * min( x, scale.factor ) / ( 2 * scale.factor)
                    }
                })
-             browser() 
-             grid.polygon(x = unit( c(x.s, rev(x.s) ), "native"), y = unit(c( y - .5 + heights, rep( y - .5, times = length(x.s) ) ), "native"), gp = gpar(stroke=NULL, fill="green", alpha=.5) )
+              grid.polygon(x = unit( c(x.s, rev(x.s) ), "native"), y = unit(c( y -  heights, rep( y, times = length(x.s) ) ), "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
            } )
       }
         
