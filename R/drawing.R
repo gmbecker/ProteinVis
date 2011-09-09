@@ -152,18 +152,19 @@ drawCoil = function(start, end, height, center.y, nativelims = current.panel.lim
 
 #this is a bit hacky, it expects to be passed the starting and ending of the ranges as x and y, respectively. Would it be better to pass in the end as an arg and have y be the labels?
 
-panel.PFAM = function(x, y, end, subscripts, labs, colors, pfamBins, ...)
+panel.PFAM = function(x, y, end, subscripts, labs,  pfamBins, ...)
   {
-    drawPFAM(data.frame(start = x, end = end, labels = labs, bin = y), labcol = "labels", colors = colors, bins = pfamBins)
+    drawPFAM(data.frame(start = x, end = end, labels = labs, bin = y), labcol = "labels", bins = pfamBins, xlim = current.panel.limits()$xlim)
   }
 
-drawPFAM = function(dat, colors, poscolumns = c("start", "end"), labcol = "featureName", bins)
+drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName", bins, xlim)
   {
     nrow = max(bins)
     
     grid.text("PFAM Domains", unit(1, "char"), 1-.2/nrow, just = "left")
     dat$bin = bins
-    apply(dat, 1, function(x, colors, poscolumns, nrow)
+    protlen = xlim[2] - xlim[1]
+    apply(dat, 1, function(x,  poscolumns, nrow, protlen)
           {
             
             st = as.numeric(x[poscolumns[1]])
@@ -177,18 +178,28 @@ drawPFAM = function(dat, colors, poscolumns = c("start", "end"), labcol = "featu
             barlen = end - st
   
             lab  = fulln
-            rot = 0
-#            col = x["col"]
+            #grab the color from the color mapping dataframe
             col = pfColMap[as.character(pfColMap[,1]) == lab, 2]
+            #check if the name is unrecognised
             if (!length(col))
               col = "#111111" #grey
+            
+            rot = 0
+            #check if domain is very short eg NOTCH
+            if( (barlen) / protlen <= .04)
+              {
+                rot = 90
+                lab = substr(lab, 1, 4)
+              } 
+            
+
             #.45 for one row ...
             step = .6/nrow
             ypos = 1 - (.15 / nrow ) - step*bin
-            grid.lines(unit(c(st, end), "native"), unit(nrow - bin + 1, "native"), gp = gpar(col = col, lex = 10))
+            grid.lines(unit(c(st, end), "native"), unit(nrow - bin + 1, "native"), gp = gpar(col = col, lex = 20))
             grid.text(lab, unit((st + end) /2, "native"), y = unit(nrow - bin + 1 , "native") - unit(1, "char") , rot = rot)
 
-          }, colors = colors, poscolumns = poscolumns, nrow = nrow)
+          },  poscolumns = poscolumns, nrow = nrow, protlen = protlen)
 
           TRUE
   }
@@ -268,27 +279,33 @@ panel.metaCount = function(x, y, subscripts, patientid, scale.factor = 8, logsca
 
     lapply(thing, function(myl)
            {
-             counts = myl$counts
-             p = myl$proportions
-             y = myl$y
-             n = myl$samplesize
+             if(length(myl$x))
+               {
+                 counts = myl$counts
+                 p = myl$proportions
+                 y = myl$y
+                 n = myl$samplesize
                                         #browser()
-             if(logscale)
-               heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor)
-             else
-               heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / scale.factor )
-             if (at.baseline)
-               {
-                 ypos = as.integer(y) - .5
-                 vjust = 0
-               }
-             else
-               {
-                 ypos = y
-                 vjust = NULL
-               }
-             colinds = sapply(p, function(x) min(ceiling(x / legend.step), 11))               
-             grid.rect(as.numeric(names(counts)), ypos, vjust = vjust, default.units = "native", 5, heights, gp = gpar(fill = colpalette[colinds]), )
+                 if(logscale)
+                   heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor)
+                 else
+                   heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / scale.factor )
+                 if (at.baseline)
+                   {
+                     ypos = as.integer(y) - .5
+                     vjust = 0
+                   }
+                 else
+                   {
+                     ypos = y
+                     vjust = NULL
+                   }
+                 colinds = sapply(p, function(x) min(ceiling(x / legend.step), 11))
+
+             
+                 grid.rect(as.numeric(names(counts)), ypos, vjust = vjust, default.units = "native", 5, heights, gp = gpar(fill = colpalette[colinds]), )
+               } else
+             grid.text("NO DATA", unit(.5, "npc"), unit(as.integer(y) - .5, "native"))
            })
     TRUE
   }
