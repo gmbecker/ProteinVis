@@ -46,7 +46,7 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig,... )
                 grid.text("SigP",unit(sum(sigx)/2, "native"), unit(.05, "npc"), gp = gpar(cex = .75))
               }, ylim = ylim)
       }
-    
+     
     panel.xyplot(x,y,...)
     TRUE
   }
@@ -212,7 +212,7 @@ panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
       cols =  rev(heat.colors(11) )
     else
       cols = colpalette
-    
+
     patientid = patientid[subscripts]
     grid.rect(.5, .5, 1, 1, gp = gpar(fill = "grey95"))
     
@@ -241,23 +241,35 @@ panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
              colpos = sapply(p, function(x) min(ceiling(x/.005), 11))
              grid.circle(as.numeric(names(counts)), y, default.units = "native", 5, gp = gpar(fill = cols[colpos]))
            })
+
+         
     
   }
 
-panel.metaCount = function(x, y, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, ...)
+panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, ...)
   {
     if(sum(!is.na(x)) == 0)
       return(TRUE)
     library(gridSVG)
     patientid = patientid[subscripts]
     grid.rect(.5, .5, 1, 1, gp = gpar(fill = "grey95"))
-    
 
-    ylevs = unique(y)
+    #deal with missing categories (even though there really shouldn't be any!!!!)
     missingCat = which(is.na(y))
     tmpcat = as.character(y)
     tmpcat[missingCat] = "UnCategorized"
     y = factor(tmpcat)
+    
+    #find indels
+    indels = which(!is.na(end))
+    if(length(indels))
+      {
+        indeldat = data.frame( start = x[indels], end = end[indels], category = y[indels])
+        print(class(indeldat))
+                                        #now remove indels and plot snps as before
+        x=x[-indels]
+        y = y[-indels]
+      }
     ylevs = unique(y)
     
     scaleseq = seq(min(as.integer(ylevs)) - .5, max(as.integer(ylevs)) + .5, by = 1/2)
@@ -307,6 +319,37 @@ panel.metaCount = function(x, y, subscripts, patientid, scale.factor = 8, logsca
                } else
              grid.text("NO DATA", unit(.5, "npc"), unit(as.integer(y) - .5, "native"))
            })
+
+        #now add indels
+
+    if(length(indels))
+      {
+        indelIRange = IRanges(start = indeldat$start, end = indeldat$end)
+        by(indeldat, indeldat$category, function(x)
+           {
+             
+             myIRange = IRanges(start = x$start, end = x$end)
+             cov = as.numeric(coverage(myIRange)) #coverage returns coverage starting at 0, not at the beginning of our earliest observation!
+             x.s = seq(min(x$start), max(x$end))
+             cov = cov[x.s]
+             y = as.integer(x$category[1])
+             heights = sapply(cov, function(x)
+               {
+                 if( x == 0)
+                   0
+                 else
+                   {
+                     if(logscale)
+                       .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor
+                 else
+                   .9 * min( x, scale.factor ) / scale.factor
+                   }
+               })
+             browser() 
+             grid.polygon(x = unit( c(x.s, rev(x.s) ), "native"), y = unit(c( y - .5 + heights, rep( y - .5, times = length(x.s) ) ), "native"), gp = gpar(stroke=NULL, fill="green", alpha=.5) )
+           } )
+      }
+        
     TRUE
   }
  
@@ -363,7 +406,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", position = c("
     structPredPlot = plots$structPred
     pfamPlot = plots$pfam
 
-    countPlot = xyplot(as.formula(paste(catname, "~", position)), data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step)
+    countPlot = xyplot(as.formula(paste(catname, "~", position)), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step)
 
     combPlot = c(pfamPlot, structPredPlot, hydroPlot, countPlot, x.same=TRUE, y.same=NA, merge.legends=TRUE)
     
