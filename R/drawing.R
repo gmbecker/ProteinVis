@@ -22,6 +22,7 @@ axis.protstruct <-
 
 panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig,... )
   {
+
     ylim = current.panel.limits()$ylim
     xlim = current.panel.limits()$xlim
 
@@ -46,7 +47,8 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig,... )
                 grid.text("SigP",unit(sum(sigx)/2, "native"), unit(.05, "npc"), gp = gpar(cex = .75))
               }, ylim = ylim)
       }
-     
+    #comes after tm/sigp stuff to deal with alpha issues
+    grid.text("Hydrophobicity", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.9 ))
     panel.xyplot(x,y,...)
     TRUE
   }
@@ -59,7 +61,21 @@ panel.psipred = function(x, y, subscripts, cutoff, strand, ...)
 
 drawPsipred = function(dat, cutoff, xlim)
   {
-    grid.text("Secondary Structure", unit(1, "char"), .75, just = "left")
+    #grid.text("Secondary Structure", unit(1, "char"), .75, just = "left")
+    grid.text("Secondary Structure", unit(2, "mm"),unit(1, "npc") -  unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.9 ))
+
+    grid.text("strand", unit(2, "mm") + unit(1, "strwidth", data="Secondary Structure") + unit(6, "mm"),unit(1, "npc") -  unit(2, "mm"), just = c("left", "top"), gp = gpar(cex = .9))
+
+    
+    arrowpos = convertX( unit(2, "mm") + unit(1, "strwidth", data="Secondary Structure") + unit(6, "mm")+ unit(1, "strwidth", data="strand  "), "native", TRUE)
+    ceny = convertY(unit(1, "npc") - unit(2, "mm") - unit(.5, "strheight", data="S"), "npc", TRUE)
+
+    drawArrow( arrowpos, arrowpos + 15, height=.6*convertY(unit(1, "strheight", data="S"), "npc", TRUE), center.y = ceny, fill = "blue")
+
+    grid.text("helix", unit(arrowpos + 15, "native") + unit(4, "mm"), unit(1, "npc") -  unit(2, "mm"), just = c("left", "top"), gp = gpar(cex = .9))
+
+    coilpos = convertX( unit(arrowpos + 15, "native") + unit(4, "mm") + unit(1, "strwidth", data="helix  "), "native", TRUE)
+    drawCoil(coilpos, coilpos + 15, height=.6*convertY(unit(1, "strheight", data="S"), "npc", TRUE), center.y = ceny, gp = gpar(fill = "red", alpha = .5), scorecol = "black")
     yline = .3
     height = .3
     grid.lines(unit(xlim, "native"), unit(yline, "npc"), gp = gpar(col = "grey50", lex = 1.5))
@@ -163,7 +179,7 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
   {
     nrow = max(bins)
     
-    grid.text("PFAM Domains", unit(1, "char"), 1-.2/nrow, just = "left")
+    grid.text("PFAM Domains", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.9 ))
     dat$bin = bins
     protlen = xlim[2] - xlim[1]
     apply(dat, 1, function(x,  poscolumns, nrow, protlen)
@@ -198,8 +214,9 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
             #.45 for one row ...
             step = .6/nrow
             ypos = 1 - (.15 / nrow ) - step*bin
-            grid.lines(unit(c(st, end), "native"), unit(nrow - bin + 1, "native"), gp = gpar(col = col, lex = 20, alpha=.5))
-            grid.text(lab, unit((st + end) /2, "native"), y = unit(nrow - bin + 1 , "native") - unit(1, "char") , rot = rot)
+            #grid.lines(unit(c(st, end), "native"), unit(nrow - bin + 1, "native"), gp = gpar(col = col, lex = 20, alpha=.5))
+            grid.rect(unit(st, "native"), unit(nrow - bin + 1, "native"), width = unit(end - st, "native"), height = unit(15, "points"), just = c("left", "center"), gp = gpar(fill = col, alpha = .5)) 
+            grid.text(lab, unit((st + end) /2, "native"), y = unit(nrow - bin + 1 , "native") - unit(1.2, "char") , rot = rot)
 
           },  poscolumns = poscolumns, nrow = nrow, protlen = protlen)
 
@@ -374,7 +391,7 @@ proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmpo
            layout = c(1, 3),
            xlim = xlim,
            main = main,
-           par.settings = list(layout.heights = list(panel = c(.3 + .25*max(pfamBins), .4, 1.5)))
+           par.settings = list(layout.heights = list(panel = c(.3 + .25*max(pfamBins), .55, 1.5)))
            )
     if(draw)
       print(cplot)
@@ -415,7 +432,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", position = c("
        ylab = list(c( "Hydrophobicity", "", ""),
        y = c( .35, NA, NA)),
        xlim = xlim,
-       par.settings = list(layout.heights = list(panel = c(.3 + .25*max(pfamBins), .4, 1.5, 2))),
+       par.settings = list(layout.heights = list(panel = c(.3 + .25*max(pfamBins), .55, 1.5, 2))),
       #    par.settings = list(layout.heights = list(panel = c(unit(3, "cm"), unit(2, "cm"), unit(8, "cm") , unit(10, "cm")))),
        main = main, sub = subtitle )
    # c(combPlot, draw.key(key), layout = c(2, 1))
