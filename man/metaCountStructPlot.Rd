@@ -10,7 +10,8 @@ Visualize protein structure information while optionally plotting
 location and frequency of events along the length of the protein.
 }
 \usage{
-metaCountStructPlot(events, catname = "PRIMARY_TISSUE", position =
+metaCountStructPlot(events, catname = "PRIMARY_TISSUE", requiredCats =
+NULL, position =
 c("protpos", "protposend"), pfam, pfamLabels = "featureName",  structPred, hydro,
 transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple
 = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5,
@@ -30,15 +31,26 @@ draw = FALSE)
   \item{catname}{
 Name of the column in events which specifies category.
 }
+\item{requiredCats}{
+  Character vector specifying the categories that must be displayed in
+  the graphic (even in the that they contain no observations). They
+  should be specified in the order they are to appear starting from the
+  bottom of the metaCount section of the plot.. If there are
+  categories observed in the data not found in requiredCats, they are
+  added to the end of the list in the order they appear. If \code{NULL},
+  categories and order are taken from the observed data.
+}
   \item{position}{
 Name of the columns specifying the start and end of the position where
-the event occured on the protein.
+the event occured on the protein. The column indicated by as the end
+  position should contain \code{NA} for point events and ending position
+  for events spanning more than one position. 
 }
   \item{pfam}{
 data.frame containing PFAM domain data, in the form of columns start,
 end, as well as label information (see pfamLabels)
 }
-\item{pfamLabels}{
+\item{pfamLabels}{ 
   Name of the column in pfam which specifies labels for the domains to
   print in the image
   }

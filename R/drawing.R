@@ -273,11 +273,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     patientid = patientid[subscripts]
     grid.rect(.5, .5, 1, 1, gp = gpar(fill = "grey95"))
 
-    #deal with missing categories (even though there really shouldn't be any!!!!)
-    missingCat = which(is.na(y))
-    tmpcat = as.character(y)
-    tmpcat[missingCat] = "UnCategorized"
-    y = factor(tmpcat)
+
     
     #find indels
     indels = which(!is.na(end))
@@ -309,7 +305,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
 
     lapply(thing, function(myl)
            {
-             if(length(myl$x))
+             if(sum( !is.na(myl$x) ) > 0)
                {
                  counts = myl$counts
                  p = myl$proportions
@@ -335,7 +331,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
              
                  grid.rect(as.numeric(names(counts)), y, vjust = vjust, default.units = "native", 5, heights, gp = gpar(fill = colpalette[colinds]), )
                } else
-             grid.text("NO DATA", unit(.5, "npc"), unit(as.integer(y) , "native"))
+             grid.text("NO DATA", unit(.5, "npc"), unit(as.integer(myl$y) , "native"))
            })
 
         #now add indels
@@ -411,7 +407,7 @@ makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposc
     list(hydro = hydroPlot, structPred = structPredPlot, pfam = pfamPlot)
   }
 
-metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle, draw = FALSE)
+metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle, draw = FALSE)
   {
     pfamIRange = IRanges(start = pfam$start, end = pfam$end, names = pfam[,pfamLabels])
     pfamBins = disjointBins(pfamIRange)
@@ -422,6 +418,40 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", position = c("
 
     structPredPlot = plots$structPred
     pfamPlot = plots$pfam
+
+    if(!is.null(requiredCats))
+      {
+        #add fake empty observations for each required category
+        colnm = names(events)
+        colcl = sapply(events, mode)
+        emptyrow = rep(NA, times = length(colnm))
+        names(emptyrow) = colnm
+        for(i in seq(along = requiredCats))
+          {
+            emptyrow[catname] = requiredCats[i]
+            events = rbind(emptyrow, events)
+          }
+        #check if this is all of them
+        obscats = unique(as.character(events[[catname]]))
+        additcats = obscats[which( !( obscats %in% requiredCats ) )]
+        cats = c(requiredCats, additcats)
+
+        #reorder factors class comes out as c("ordered", "factor")
+        events[[catname]] = factor(as.character(events[[catname]]), levels = cats)
+        for(i in seq(along = colcl))
+          {
+            if(!any( class( events[[ colnm[ i ] ]] ) == "factor" ) )
+              mode(events[[colnm[i]]] ) = colcl[i]
+          }
+      }
+
+        #deal with missing categories (even though there really shouldn't be any!!!!)
+    y = events[[catname]]
+    levs = levels(y)
+    missingCat = which(is.na(y))
+    tmpcat = as.character(y)
+    tmpcat[missingCat] = "UnCategorized"
+    events[[catname]] = factor(tmpcat, levels = c("UnCategorized", levels(events[[catname]])))
 
     countPlot = xyplot(as.formula(paste(catname, "~", position)), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step)
 

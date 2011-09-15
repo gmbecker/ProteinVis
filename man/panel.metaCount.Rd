@@ -15,6 +15,10 @@ Provided by lattice
   \item{y}{
 Provided by lattice
 }
+\item{end}{
+  Vector containing the ending positions of the events being
+  counted. For point events, the vector should contain \code{NA}
+  }
   \item{subscripts}{
 Provided by lattice
 }
