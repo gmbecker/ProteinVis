@@ -42,7 +42,7 @@ Name of the column in events which specifies category.
 }
   \item{position}{
 Name of the columns specifying the start and end of the position where
-the event occured on the protein. The column indicated by as the end
+the event occured on the protein. The column indicated as the end
   position should contain \code{NA} for point events and ending position
   for events spanning more than one position. 
 }
