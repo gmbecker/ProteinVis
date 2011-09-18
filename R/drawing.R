@@ -49,7 +49,9 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig,... )
       }
     #comes after tm/sigp stuff to deal with alpha issues
     grid.text("Hydrophobicity", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.9 ))
-    panel.xyplot(x,y,...)
+    #This may get rid of the problem with hydrophobicity not plotting correctly. Not sure, I need to get the data from cory.
+    if(length(x))
+      panel.xyplot(x,y,...)
     TRUE
   }
 
@@ -168,7 +170,6 @@ drawCoil = function(start, end, height, center.y, nativelims = current.panel.lim
     TRUE
   }
 
-#this is a bit hacky, it expects to be passed the starting and ending of the ranges as x and y, respectively. Would it be better to pass in the end as an arg and have y be the labels?
 
 panel.PFAM = function(x, y, end, subscripts, labs,  pfamBins, ...)
   {
@@ -210,7 +211,6 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
                 lab = substr(lab, 1, 4)
               } 
             
-
             #.45 for one row ...
             step = .6/nrow
             ypos = 1 - (.15 / nrow ) - step*bin
@@ -222,8 +222,6 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
 
           TRUE
   }
-
-
 
 panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
   {
@@ -260,8 +258,6 @@ panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
              colpos = sapply(p, function(x) min(ceiling(x/.005), 11))
              grid.circle(as.numeric(names(counts)), y, default.units = "native", 5, gp = gpar(fill = cols[colpos]))
            })
-
-         
     
   }
 
@@ -269,14 +265,17 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
   {
     if(sum(!is.na(x)) == 0)
       return(TRUE)
-    library(gridSVG)
+
     patientid = patientid[subscripts]
     grid.rect(.5, .5, 1, 1, gp = gpar(fill = "grey95"))
-
-
+ 
+    end = end[subscripts]
+    
+    nas = which( is.na( end ) )
+    end[ nas ] = x[ nas ]
     
     #find indels
-    indels = which(!is.na(end))
+    indels = which( x != end )
     if(length(indels))
       {
         indeldat = data.frame( start = x[indels], end = end[indels], category = y[indels])
@@ -500,6 +499,5 @@ axis.combined = function(side, ...)
             }
             )
    }
-
 
 
