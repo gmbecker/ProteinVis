@@ -26,7 +26,7 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig,... )
     ylim = current.panel.limits()$ylim
     xlim = current.panel.limits()$xlim
 
-    if(!is.null(tm))
+    if(!is.null(tm) && nrow(tm) > 0 )
       {
         tmmat = combineTMDomains(tm, poscols = tmposcols)
         apply(tmmat, 1, function(x, ylim)
@@ -36,7 +36,7 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig,... )
               }, ylim = ylim)
       }
 
-    if(!is.null(sig))
+    if(!is.null(sig) && nrow(sig) > 0)
       {
         apply(sig, 1, function(s, ylim)
               {
