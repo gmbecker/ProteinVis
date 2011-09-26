@@ -261,7 +261,7 @@ panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
     
   }
 
-panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, ...)
+panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), ...)
   {
     if(sum(!is.na(x)) == 0)
       return(TRUE)
@@ -461,10 +461,18 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
        ylab = list(c( "Hydrophobicity", "", ""),
        y = c( .35, NA, NA)),
        xlim = xlim,
-       par.settings = list(layout.heights = list(panel = c(.3 + .25*max(pfamBins), .55, 1.5, 2))),
+       par.settings = list(layout.heights = list(panel = c(.3 + .25*max(pfamBins), .55, 1.5, 2)), layout.widths = list(right.padding = 10)),
+     
       #    par.settings = list(layout.heights = list(panel = c(unit(3, "cm"), unit(2, "cm"), unit(8, "cm") , unit(10, "cm")))),
        main = main, sub = subtitle )
    # c(combPlot, draw.key(key), layout = c(2, 1))
+
+    if(!is.null(key))
+      {
+  
+        
+      }
+        
     if(draw)
       print(combPlot)
     else
@@ -474,11 +482,12 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 
 axis.combined = function(side, ...)
   {
-     switch(side,
+    packnum = get("packet.number", sys.frame(3))
+    switch(side,
            left = {
               #This is  a super-hack but it's the only way I have figured out to do it.
              #It is likely that this will fail if we ever try to do a conditional form of these plots
-             packnum = get("packet.number", sys.frame(3))
+
              if(!is.null(packnum))
                {
                  if(packnum > 2)
@@ -496,6 +505,23 @@ axis.combined = function(side, ...)
            },
             bottom = {
               axis.default(side , ...)
+            },
+            right = {
+              if(packnum == 4)
+                {
+                  #even more superhacky!
+                  trell = get("x", sys.frame(2))
+                  myargs = trell$panel.args[[4]] # 4 is for panel.metacount
+                  ys = myargs$y
+                  xs = myargs$x
+                  yinds = as.integer(ys[ seq( which( !is.na( xs ) )[1] , length(ys) ) ])
+                  yvals = levels(ys)[yinds]
+                  patid = myargs$patientid
+                  mutcounts = by( yinds , yinds , length)
+                  patcounts = as.numeric(by( patid , yinds , function(x) length(unique(x))))
+                  panel.axis(side = side, outside = TRUE,
+                             at = as.numeric(names(mutcounts)), labels = paste(as.numeric(mutcounts) , patcounts, sep = " / ")) 
+                }
             }
             )
    }
