@@ -452,6 +452,10 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     tmpcat[missingCat] = "UnCategorized"
     events[[catname]] = factor(tmpcat, levels = c("UnCategorized", levels(events[[catname]])))
 
+    #sampleID is passed in as the name of a column, but we need to have the actual data.
+    if(is(sampleID, "character") & length(sampleID) == 1)
+      sampleID = events[,sampleID]
+    
     countPlot = xyplot(as.formula(paste(catname, "~", position)), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step)
 
     combPlot = c(pfamPlot, structPredPlot, hydroPlot, countPlot, x.same=TRUE, y.same=NA, merge.legends=TRUE)
