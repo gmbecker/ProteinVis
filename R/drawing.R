@@ -418,6 +418,12 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     structPredPlot = plots$structPred
     pfamPlot = plots$pfam
 
+        #sampleID may be passed in as the name of a column, but we need to have the actual data.
+    if(length(sampleID) != 1 & length(sampleID) != nrow(events) )
+      stop("sampleID must be either the name of a column in the events data.frame or a vector with the same number of elements that events has rows.")
+    if(is(sampleID, "character") & length(sampleID) == 1)
+      sampleID = events[,sampleID]
+    
     if(!is.null(requiredCats))
       {
         #add fake empty observations for each required category
@@ -452,9 +458,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     tmpcat[missingCat] = "UnCategorized"
     events[[catname]] = factor(tmpcat, levels = c("UnCategorized", levels(events[[catname]])))
 
-    #sampleID is passed in as the name of a column, but we need to have the actual data.
-    if(is(sampleID, "character") & length(sampleID) == 1)
-      sampleID = events[,sampleID]
+
     
     countPlot = xyplot(as.formula(paste(catname, "~", position)), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step)
 
