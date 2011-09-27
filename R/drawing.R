@@ -471,12 +471,6 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
        main = main, sub = subtitle )
    # c(combPlot, draw.key(key), layout = c(2, 1))
 
-    if(!is.null(key))
-      {
-  
-        
-      }
-        
     if(draw)
       print(combPlot)
     else
@@ -518,9 +512,11 @@ axis.combined = function(side, ...)
                   myargs = trell$panel.args[[4]] # 4 is for panel.metacount
                   ys = myargs$y
                   xs = myargs$x
-                  yinds = as.integer(ys[ seq( which( !is.na( xs ) )[1] , length(ys) ) ])
-                  yvals = levels(ys)[yinds]
                   patid = myargs$patientid
+                  st = length(ys) - length(patid) + 1
+                  yinds = as.integer(ys[ seq( st, length(ys) ) ])
+                  yvals = levels(ys)[yinds]
+                  
                   mutcounts = by( yinds , yinds , length)
                   patcounts = as.numeric(by( patid , yinds , function(x) length(unique(x))))
                   panel.axis(side = side, outside = TRUE,
