@@ -32,8 +32,7 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig,... )
         apply(tmmat, 1, function(x, ylim)
               {
                 grid.polygon( c( x , rev( x ) ), rep( ylim , times = c(2, 2) ) , gp = gpar(fill = "grey75", alpha = .5, col = "white"), default.units = "native", draw = TRUE)
-                grid.text("TM",unit(sum(x)/2, "native"), unit(.05, "npc"), gp = gpar(cex = .75))
-              }, ylim = ylim)
+                 }, ylim = ylim)
       }
 
     if(!is.null(sig) && nrow(sig) > 0)
@@ -44,11 +43,24 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig,... )
                 sigend = as.numeric(s["end"])
                 sigx = c(sigst, sigend)
                 grid.polygon(c(sigx, rev(sigx)), rep(ylim, times = c(2,2 )), gp = gpar(fill = rgb(180, 255, 180, max = 255), alpha = .5, col = "white"), default.units = "native", draw = TRUE)
-                grid.text("SigP",unit(sum(sigx)/2, "native"), unit(.05, "npc"), gp = gpar(cex = .75))
-              }, ylim = ylim)
+                 }, ylim = ylim)
       }
     #comes after tm/sigp stuff to deal with alpha issues
     grid.text("Hydrophobicity", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.9 ))
+
+   #browser()
+    pos = unit(2, "mm") + unit(1, "strwidth", "Hydrophobicity") + unit(2, "char")
+    
+    grid.text("Signal Peptide Prediction", pos, unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar( cex=.9 ))
+    pos = pos + unit(.8, "strwidth", "Signal Peptide Prediction") + unit(1, "char")
+    grid.rect(pos, unit(1, "npc") - unit(2, "mm"), unit(1, "char"), unit(.9, "char"),gp = gpar(fill = rgb(180, 255, 180, max=255), alpha = .5, col = "white"), just = c("left", "top"))
+    pos = pos + unit(1, "char") + unit(4, "char")
+    
+    grid.text("Transmembrane Domain Prediction", pos, unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar( cex=.9 ))
+    pos = pos + unit(.8, "strwidth", "Transmembrane Domain Prediction") 
+    grid.rect(pos, unit(1, "npc") - unit(2, "mm"), unit(1, "char"), unit(.9, "char"),gp = gpar(fill = "grey75", alpha = .5, col = "white"), just = c("left", "top"))
+    
+              
     #This may get rid of the problem with hydrophobicity not plotting correctly. Not sure, I need to get the data from cory.
     if(length(x))
       panel.xyplot(x,y,...)
@@ -217,8 +229,13 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
             step = .6/nrow
             ypos = 1 - (.15 / nrow ) - step*bin
             #grid.lines(unit(c(st, end), "native"), unit(nrow - bin + 1, "native"), gp = gpar(col = col, lex = 20, alpha=.5))
-            grid.rect(unit(st, "native"), unit(nrow - bin + 1, "native"), width = unit(end - st, "native"), height = unit(15, "points"), just = c("left", "center"), gp = gpar(fill = col, alpha = .5)) 
-            grid.text(lab, unit((st + end) /2, "native"), y = unit(nrow - bin + 1 , "native") - unit(1.2, "char") , rot = rot)
+            grid.rect(unit(st, "native"),
+                      unit(nrow - bin + 1, "native"),
+                      width = unit(end - st, "native"),
+                      #height = unit(10, "points"),
+                      height = unit(.45, "native"),
+                      just = c("left", "center"), gp = gpar(fill = col, alpha = .5)) 
+            grid.text(lab, unit((st + end) /2, "native"), y = unit(nrow - bin + 1 , "native") - unit(1.2, "char") , rot = rot, gp = gpar(cex = .67))
 
           },  poscolumns = poscolumns, nrow = nrow, protlen = protlen)
 
@@ -263,7 +280,7 @@ panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
     
   }
 
-panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), ...)
+panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), indel.overlay = FALSE, ...)
   {
     if(sum(!is.na(x)) == 0)
       return(TRUE)
@@ -286,10 +303,25 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
         y = y[-indels]
       }
     ylevs = unique(y)
+    yseq = seq(min(as.integer(ylevs))  , max(as.integer(ylevs)) )
+    grid.rect(unit(.5, "npc"), unit(yseq, "native"), unit(1, "npc"), unit(1, "native"), gp = gpar(fill = c("#c0c0c0", "#bcc6d1"), col = "grey95", alpha = c(1, .5)) )
+    if(indel.overlay)
+      {
+        scaleseq = seq(min(as.integer(ylevs)) - .5 , max(as.integer(ylevs)) +.5)
+        hdenom = scale.factor
+        #grid.segments(unit(0, "npc"), scaleseq, unit(1, "npc"), scaleseq, default.units = "native", gp = gpar(col = c("black"), lex = 1.5))
+    }
+    else
+      {
+        hdenom = 2 * scale.factor
+        grid.segments(unit(0, "npc"), yseq, unit(1, "npc"), yseq, default.units = "native", gp = gpar(col = c("black"), lex = 1.5))
+    }
+
+    ygridseq = seq(min(as.integer(y), na.rm=TRUE) - .5, max(as.integer(y), na.rm=TRUE) + .5, by = 1)
     
-    scaleseq = seq(min(as.integer(ylevs)) , max(as.integer(ylevs)))
-    grid.rect(unit(.5, "npc"), unit(scaleseq, "native"), unit(1, "npc"), unit(1, "native"), gp = gpar(fill = c("grey90", "skyblue"), col = "grey95", alpha = c(1, .5)) )
-    grid.segments(unit(0, "npc"), scaleseq, unit(1, "npc"), scaleseq, default.units = "native", gp = gpar(col = c("black"), lex = 1.5))
+    grid.segments(unit(0, "npc"), ygridseq  , unit(1, "npc"), ygridseq, gp = gpar(col = "white"), default.units = "native")
+    grid.segments(unit(seq(1, max(x, na.rm=TRUE), length.out = 10), "native"), unit(0, "npc"), unit(seq(1, max(x, na.rm=TRUE), length.out = 10 ), "native"), unit(1, "npc"), gp = gpar(col = "white"))
+    
     
     ylim = current.panel.limits()$ylim
     gray.yrange = .5 - ylim[1]
@@ -306,6 +338,8 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
         list(samplesize = sampsize, proportions = props, x = x, y  = ylev, counts = counts)
       }, x = x, y = y, patid = patientid)
 
+
+    
     lapply(thing, function(myl)
            {
              if(sum( !is.na(myl$x) ) > 0)
@@ -315,24 +349,22 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  y = myl$y
                  n = myl$samplesize
                                         #browser()
+    
                  if(logscale)
-                   heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / ( 2 * scale.factor))
+                   heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / hdenom)
                  else
-                   heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / (2 * scale.factor ))
-                 if (at.baseline)
-                   {
-                     ypos = as.integer(y) - .5
-                     vjust = 0
-                   }
+                   heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / hdenom)
+
+                 if(indel.overlay)
+                   ypos = as.integer(y) - .5
                  else
-                   {
-                     ypos = y
-                     vjust = NULL
-                   }
+                   ypos = as.integer(y)
+
+                 vjust = 0
                  colinds = sapply(p, function(x) min(ceiling(x / legend.step), 11))
 
              
-                 grid.rect(as.numeric(names(counts)), y, vjust = vjust, default.units = "native", 5, heights, gp = gpar(fill = colpalette[colinds]), )
+                 grid.rect(as.numeric(names(counts)), ypos, vjust = vjust, default.units = "native", 5, heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
                } else
              grid.text("NO DATA", unit(.5, "npc"), unit(as.integer(myl$y) , "native"))
            })
@@ -357,12 +389,18 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  else
                    {
                      if(logscale)
-                       .05 + .9 * min( log( x, base = logbase), scale.factor ) / ( 2 * scale.factor)
+                       .05 + .9 * min( log( x, base = logbase), scale.factor ) / hdenom
                  else
-                   .9 * min( x, scale.factor ) / ( 2 * scale.factor)
+                   .9 * min( x, scale.factor ) / hdenom
                    }
                })
-              grid.polygon(x = unit( c(x.s, rev(x.s) ), "native"), y = unit(c( y -  heights, rep( y, times = length(x.s) ) ), "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
+
+             if(indel.overlay)
+               indelseq = c(y - .5 + heights, rep(y - .5, times = length(x.s)))
+             else
+               indelseq = c(y - heights, rep(y, times = length(x.s)))
+             
+              grid.polygon(x = unit( c(x.s, rev(x.s) ), "native"), y = unit(  indelseq, "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
            } )
       }
         
@@ -402,20 +440,35 @@ proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmpo
 makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", cutoff = if(max(structPred$helix > 1)) 6 else .6, pfamBins)
   {
 
-    hydroPlot = xyplot(featureValue ~ start, type = "l", col = "black", data = hydro, tm = transMem, sig = sigP, xlim = xlim, panel = panel.protstruct, axis = axis.protstruct, tmposcol = tmposcol) 
+    if(dim(hydro)[2] == 0 | is.null(hydro))
+      hydro = data.frame(start = numeric(), featureValue = numeric())
 
+    hydroPlot = xyplot(featureValue ~ start, type = "l", col = "black", data = hydro, tm = transMem, sig = sigP, xlim = xlim, panel = panel.protstruct, axis = axis.combined, tmposcol = tmposcol, ylab= NULL) 
+
+    if(dim(structPred)[2] == 0 | is.null(structPred))
+      structPred = data.frame(start = numeric(), helix = numeric(), strand = numeric() )
+    
     structPredPlot = xyplot(helix ~ start, data = structPred, strand = structPred$strand, cutoff= cutoff, panel= panel.psipred, ylim = c(0, 1), ylab = NULL, xlab = NULL)
 
-    pfamPlot = xyplot(bin~start, end = pfam$end,  data= pfam, labs = pfam[,pfamLabels], panel = panel.PFAM, ylab = NULL, xlab = "Amino Acid Position", axis = axis.combined, pfamBins = pfamBins)
+    if(dim(pfam)[2] == 0 | is.null(pfam))
+      pfam = data.frame(start = numeric(), end = numeric(), pfamLabels = character(), bin = numeric())
+    
+    pfamPlot = xyplot(bin~start, end = pfam$end,  data= pfam, labs = pfam[,pfamLabels], panel = panel.PFAM, ylab = NULL, xlab = "Amino Acid Position", pfamBins = pfamBins)
+    
     list(hydro = hydroPlot, structPred = structPredPlot, pfam = pfamPlot)
   }
 
-metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle, draw = FALSE)
+metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle, draw = FALSE, indel.overlay = FALSE)
   {
-    pfamIRange = IRanges(start = pfam$start, end = pfam$end, names = pfam[,pfamLabels])
-    pfamBins = disjointBins(pfamIRange)
-    pfam$bin = factor(pfamBins, levels = 0:(max(pfamBins + 1)))
-    pfam
+    if(!is.null(pfam) & ncol(pfam) > 0)
+      {
+        pfamIRange = IRanges(start = pfam$start, end = pfam$end, names = pfam[,pfamLabels])
+        pfamBins = disjointBins(pfamIRange)
+        pfam$bin = factor(pfamBins, levels = 0:(max(pfamBins + 1)))
+        
+      } else {
+        pfamBins = NULL
+      }
     plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, pfamBins = pfamBins)
     
     hydroPlot = plots$hydro
@@ -466,20 +519,21 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 
     if(!is.null(key))
       {
-    countPlot = xyplot(as.formula(paste(catname, "~", position)), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step, key = key)
+    countPlot = xyplot(as.formula(paste(catname, "~", position)), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step, key = key, indel.overlay = indel.overlay)
   } else {
-    countPlot = xyplot(as.formula(paste(catname, "~", position)), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step)
+    countPlot = xyplot(as.formula(paste(catname, "~", position)), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step, indel.overlay = indel.overlay)
   }
     
-    combPlot = c(pfamPlot, structPredPlot, hydroPlot, countPlot, x.same=TRUE, y.same=NA)#, merge.legends=TRUE)
+    combPlot = c(  hydroPlot, structPredPlot, pfamPlot, countPlot, x.same=TRUE, y.same=NA)#, merge.legends=TRUE)
     
    combPlot = update(combPlot,
        layout = c(1, 4),
        xlim = xlim,
-       par.settings = list(layout.heights = list(panel = c( .5*max(pfamBins), .55, .75, 2)), layout.widths = list(right.padding = 10, left.padding = max(nchar(unique(events[[catname]] ))) + 1.5)),
+       par.settings = list(layout.heights = list(panel = c(  .3, .25, .20*max(pfamBins), .20*length(unique(events[[catname]])))), layout.widths = list(right.padding = 10, left.padding = max(nchar(as.character(unique(events[[catname]] ))))*.67 )),
      
-      #    par.settings = list(layout.heights = list(panel = c(unit(3, "cm"), unit(2, "cm"), unit(8, "cm") , unit(10, "cm")))),
-       main = main, sub = subtitle
+       
+       main = main, sub = subtitle,
+     ylab.right = list(label = "# mutations / # samples", vjust = -5, rot = -90)
      )
    # c(combPlot, draw.key(key), layout = c(2, 1))
 
@@ -499,8 +553,9 @@ axis.combined = function(side, ...)
 
              if(!is.null(packnum))
                {
-                 if(packnum > 2)
+                 if(packnum %in% c(1, 4))
                    {
+                 
                      if(packnum == 4)
                        {
                          args = list(...)
@@ -510,6 +565,7 @@ axis.combined = function(side, ...)
                      else
                        axis.default(side, ...)
                    }
+                 
                }
            },
             bottom = {
