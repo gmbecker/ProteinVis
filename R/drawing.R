@@ -76,7 +76,7 @@ panel.psipred = function(x, y, subscripts, cutoff, strand, ...)
 drawPsipred = function(dat, cutoff, xlim)
   {
     #grid.text("Secondary Structure", unit(1, "char"), .75, just = "left")
-    grid.text("Secondary Structure", unit(2, "mm"),unit(1, "npc") -  unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.9 ))
+    grid.text("Secondary Structure", unit(2, "mm"),unit(1, "npc") -  unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.8 ))
 
     grid.text("strand", unit(2, "mm") + unit(1, "strwidth", data="Secondary Structure") + unit(6, "mm"),unit(1, "npc") -  unit(2, "mm"), just = c("left", "top"), gp = gpar(cex = .9))
 
@@ -192,7 +192,7 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
   {
     nrow = max(bins)
     
-    grid.text("PFAM Domains", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.9 ))
+    grid.text("PFAM Domains", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.8 ))
     dat$bin = bins
     protlen = xlim[2] - xlim[1]
     apply(dat, 1, function(x,  poscolumns, nrow, protlen)
@@ -223,7 +223,11 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
                 lab = substr(lab, 1, 4)
                 if(substr(lab, 4, 4) == "_")
                   lab = substr(lab, 1, 3)
-              } 
+                textypos = unit(nrow - bin + 1 , "native")
+              } else {
+                textypos =  unit(nrow - bin + 1 , "native") - unit(1.2, "char")
+              }
+                
             
             #.45 for one row ...
             step = .6/nrow
@@ -235,7 +239,7 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
                       #height = unit(10, "points"),
                       height = unit(.45, "native"),
                       just = c("left", "center"), gp = gpar(fill = col, alpha = .5)) 
-            grid.text(lab, unit((st + end) /2, "native"), y = unit(nrow - bin + 1 , "native") - unit(1.2, "char") , rot = rot, gp = gpar(cex = .67))
+            grid.text(lab, unit((st + end) /2, "native"), y =textypos, rot = rot, gp = gpar(cex = .67))
 
           },  poscolumns = poscolumns, nrow = nrow, protlen = protlen)
 
@@ -304,7 +308,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
       }
     ylevs = unique(y)
     yseq = seq(min(as.integer(ylevs))  , max(as.integer(ylevs)) )
-    grid.rect(unit(.5, "npc"), unit(yseq, "native"), unit(1, "npc"), unit(1, "native"), gp = gpar(fill = c("#c0c0c0", "#bcc6d1"), col = "grey95", alpha = c(1, .5)) )
+    grid.rect(unit(.5, "npc"), unit(yseq, "native"), unit(1, "npc"), unit(1, "native"), gp = gpar(fill = c(rgb(217, 224, 235, max= 255), rgb(238, 240, 245, max = 255)), col = "grey95"))
     if(indel.overlay)
       {
         scaleseq = seq(min(as.integer(ylevs)) - .5 , max(as.integer(ylevs)) +.5)
@@ -458,7 +462,7 @@ makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposc
     list(hydro = hydroPlot, structPred = structPredPlot, pfam = pfamPlot)
   }
 
-metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle, draw = FALSE, indel.overlay = FALSE)
+metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rep("black", times= 11), legend.step = .01, sampleID, key , subtitle = "Amino Acid Position", draw = FALSE, indel.overlay = FALSE)
   {
     if(!is.null(pfam) & ncol(pfam) > 0)
       {
@@ -477,10 +481,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     pfamPlot = plots$pfam
 
         #sampleID may be passed in as the name of a column, but we need to have the actual data.
-    if(length(sampleID) != 1 & length(sampleID) != nrow(events) )
-      stop("sampleID must be either the name of a column in the events data.frame or a vector with the same number of elements that events has rows.")
-    if(is(sampleID, "character") & length(sampleID) == 1)
-      sampleID = events[,sampleID]
+
     
     if(!is.null(requiredCats))
       {
@@ -508,7 +509,8 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
           }
       }
 
-        #deal with missing categories (even though there really shouldn't be any!!!!)
+
+                                        #deal with missing categories (even though there really shouldn't be any!!!!)
     y = events[[catname]]
     levs = levels(y)
     missingCat = which(is.na(y))
@@ -516,27 +518,53 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     tmpcat[missingCat] = "UnCategorized"
     events[[catname]] = factor(tmpcat, levels = c("UnCategorized", levels(events[[catname]])))
 
+    if(length(sampleID) != 1 & length(sampleID) != nrow(events) )
+      stop("sampleID must be either the name of a column in the events data.frame or a vector with the same number of elements that events has rows.")
+    if(is(sampleID, "character") & length(sampleID) == 1)
+      sampleID = events[,sampleID]
 
-    if(!is.null(key))
-      {
-    countPlot = xyplot(as.formula(paste(catname, "~", position)), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step, key = key, indel.overlay = indel.overlay)
-  } else {
-    countPlot = xyplot(as.formula(paste(catname, "~", position)), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step, indel.overlay = indel.overlay)
-  }
+    counts = tapply(sampleID, events[[catname]],
+      function(x) length(unique(x)))
     
-    combPlot = c(  hydroPlot, structPredPlot, pfamPlot, countPlot, x.same=TRUE, y.same=NA)#, merge.legends=TRUE)
+    if (!is.factor(events[[catname]]))
+      events[[catname]] = factor(events[[catname]])
     
+    levels(events[[catname]]) = paste(levels(events[[catname]]), " (", counts, ")", sep = "")
+    
+
+    countPlot = xyplot(as.formula(paste(catname, "~", position)), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay)
+
+
+    
+    combPlot = c(  #hydroPlot,
+      structPredPlot,
+      pfamPlot,
+      countPlot,
+      x.same=TRUE, y.same=NA)#, merge.legends=TRUE)
+
+    leftpad = max(nchar(as.character(unique(events[[catname]] ))))*.67
+    panelLayout = c(  #.3,
+      .25,
+      .20*max(pfamBins),
+      .20*length(unique(events[[catname]])))
    combPlot = update(combPlot,
-       layout = c(1, 4),
-       xlim = xlim,
-       par.settings = list(layout.heights = list(panel = c(  .3, .25, .20*max(pfamBins), .20*length(unique(events[[catname]])))), layout.widths = list(right.padding = 10, left.padding = max(nchar(as.character(unique(events[[catname]] ))))*.67 )),
+       #layout = c(1, 4),
+     layout = c(1, 3),
+     xlim = xlim,
+     axis = axis.combined,
+       par.settings = list(
+         layout.heights = list(
+           panel = panelLayout),
+           layout.widths = list(
+                                        right.padding = 10,
+             left.padding = leftpad)),
      
        
-       main = main, sub = subtitle,
-     ylab.right = list(label = "# mutations / # samples", vjust = -5, rot = -90)
-     )
+     main = main, xlab = subtitle,
+     ylab.right = list(label = "capped log mutation counts", vjust = -1, rot = -90))
+     
    # c(combPlot, draw.key(key), layout = c(2, 1))
-
+    
     if(draw)
       print(combPlot)
     else
@@ -545,51 +573,37 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 
 axis.combined = function(side, ...)
   {
+
+    
     packnum = get("packet.number", sys.frame(3))
     switch(side,
            left = {
               #This is  a super-hack but it's the only way I have figured out to do it.
              #It is likely that this will fail if we ever try to do a conditional form of these plots
-
+             
              if(!is.null(packnum))
                {
-                 if(packnum %in% c(1, 4))
-                   {
-                 
-                     if(packnum == 4)
+#                 if(packnum %in% c(1, 3))
+#                   {
+#
+
+                     if(packnum == 3)
                        {
                          args = list(...)
-                         args$rot=0;
+                         args$rot = 0
+                         args$components$left$tck = c(0, 0)
                          do.call("axis.default", c(side, args))
                        }
-                     else
-                       axis.default(side, ...)
-                   }
+ #                    else
+ #                      axis.default(side, ...)
+#                   }
                  
                }
            },
             bottom = {
               axis.default(side , ...)
-            },
-            right = {
-              if(packnum == 4)
-                {
-                  #even more superhacky!
-                  trell = get("x", sys.frame(2))
-                  myargs = trell$panel.args[[4]] # 4 is for panel.metacount
-                  ys = myargs$y
-                  xs = myargs$x
-                  patid = myargs$patientid
-                  st = length(ys) - length(patid) + 1
-                  yinds = as.integer(ys[ seq( st, length(ys) ) ])
-                  yvals = levels(ys)[yinds]
-                  
-                  mutcounts = by( yinds , yinds , length)
-                  patcounts = as.numeric(by( patid , yinds , function(x) length(unique(x))))
-                  panel.axis(side = side, outside = TRUE,
-                             at = as.numeric(names(mutcounts)), labels = paste(as.numeric(mutcounts) , patcounts, sep = " / ")) 
-                }
             }
+         
             )
    }
 
