@@ -556,12 +556,14 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
          layout.heights = list(
            panel = panelLayout),
            layout.widths = list(
-                                        right.padding = 10,
+                                        right.padding = 5,
              left.padding = leftpad)),
      
        
      main = main, xlab = subtitle,
-     ylab.right = list(label = "capped log mutation counts", vjust = -1, rot = -90))
+     ylab.right = list(label = c("capped log mutation counts", "", ""), vjust = -1, rot = -90),
+     y = c(panelLayout[3], NA, NA)
+     )
      
    # c(combPlot, draw.key(key), layout = c(2, 1))
     
