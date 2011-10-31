@@ -31,12 +31,17 @@ combineTMDomains = function(tmdf, poscols = c("start", "end"))
 
 calcPlotHeight = function(baseheight, type = "metaCount", pfam, events, catname)
   {
+    if(!is.null(pfam) & nrow(pfam))
+      {
     myPFIRanges = IRanges(start = pfam$start, end = pfam$end)
     bins = disjointBins(myPFIRanges)
+  } else {
+    bins = 1
+  }
     denom = if(type == "metaCount")
-      .20 + .3 + 1 #assume 1 pfam row and 5 categories
+      .20 + .25 + 1 #assume 1 pfam row and 5 categories
     else
-      .20 + .3 + .25 #the .25 is for the hydro, which isn't in the above plot.
+      .20 + .25 + .25 #the .25 is for the hydro, which isn't in the above plot.
 
     
     baseheight * (1 + .2 /denom * ( max(bins) - 1) + .2 / denom* (length(unique(events[[catname]])) - 5))
