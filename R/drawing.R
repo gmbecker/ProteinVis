@@ -521,33 +521,52 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
  
     if(!is.null(requiredCats))
       {
+        if(FALSE)
+          {
         #add fake empty observations for each required category
         colnm = names(events)
         colcl = sapply(events, mode)
-        emptyrow = rep(NA, times = length(colnm))
+        emptyrow = do.call(data.frame, as.list( rep( NA, times = length( colnm ) ) ) )
         names(emptyrow) = colnm
         #get full list of factor levels
-        obscats = unique(as.character(events[[catname]]))
-        additcats = obscats[which( !( obscats %in% requiredCats ) )]
-        cats = c(requiredCats, additcats)
+        
         #check which columns are factors to avoid the invalid level warning
         factcols = which(sapply(events, class) == "factor")
+        
+        levels(emptyrow[[catname]]) = cats
         emptyrow[factcols] = 1L
+        
         
 #reorder factors class comes out as c("ordered", "factor")
         events[[catname]] = factor(as.character(events[[catname]]), levels = cats)
         for(i in seq(along = requiredCats))
           {
             emptyrow[catname] = requiredCats[i]
-            events = rbind(emptyrow, events)
+            if(nrow(events) == 0)
+              events = rbind(events, emptyrow)
+            else
+              events = rbind(emptyrow, events)
           }
-        #check if this is all of them
-        
+                                        #check if this is all of them
+
+        #fix for empty incoming events, not sure why
+        names(events) = colnm
         for(i in seq(along = colcl))
           {
             if(!any( class( events[[ colnm[ i ] ]] ) == "factor" ) )
               mode(events[[colnm[i]]] ) = colcl[i]
           }
+      }
+        obscats = unique(as.character(events[[catname]]))
+        additcats = obscats[which( !( obscats %in% requiredCats ) )]
+        cats = unique(c(requiredCats, additcats))
+        charvals = as.character(events[[catname]])
+        
+        events[[catname]] = factor(charvals, levels = cats)
+        if( !nrow( events ) )
+          events[1, position[1] ] = 1
+        for(reqcat in requiredCats)
+          events[nrow(events) + 1 , catname] = reqcat
       }
 
 
@@ -571,7 +590,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     levels(events[[catname]]) = paste(levels(events[[catname]]), " (", counts, ")", sep = "")
     
 
-    countPlot = xyplot(as.formula(paste(catname, "~", position)), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay, vertGuides = vertGuides)
+    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay, vertGuides = vertGuides, ylim = range(as.integer(levels(events[[catname]]))))
 
 
     leg = makeColorLegend(colpalette, scale.factor, legend.step)
