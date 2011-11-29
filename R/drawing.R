@@ -188,7 +188,14 @@ drawCoil = function(start, end, height, center.y, nativelims = current.panel.lim
 panel.PFAM = function(x, y, end, subscripts, labs,  pfamBins, vertGuides, ...)
   {
     drawVertGuides(vertGuides, "grey80")
-    drawPFAM(data.frame(start = x, end = end, labels = labs, bin = y), labcol = "labels", bins = pfamBins, xlim = current.panel.limits()$xlim)
+    grid.text("PFAM Domains", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.8 ))
+    if(!is.null(pfamBins))
+      drawPFAM(data.frame(start = x, end = end, labels = labs, bin = y), labcol = "labels", bins = pfamBins, xlim = current.panel.limits()$xlim)
+    else
+      {
+        grid.text("No PFAM data available")
+
+      }
   }
 
 drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName", bins, xlim)
@@ -199,7 +206,7 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
     grid.segments(y0 = unit(hseq, "native"), y1= unit(hseq, "native"), gp = gpar(col = "grey80"))
     
     dat = dat[apply(dat, 1, function(x) all(!is.na(x))),]
-    grid.text("PFAM Domains", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.8 ))
+    
     #dat$bin = bins
     protlen = xlim[2] - xlim[1]
     apply(dat, 1, function(x,  poscolumns, nrow, protlen)
@@ -462,23 +469,34 @@ makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposc
     
     structPredPlot = xyplot(helix ~ start, data = structPred, strand = structPred$strand, cutoff= cutoff, panel= panel.psipred, ylim = c(0, 1), ylab = NULL, xlab = NULL, vertGuides = vertGuides)
 
-    if(dim(pfam)[2] == 0 | is.null(pfam))
-      pfam = data.frame(start = numeric(), end = numeric(), pfamLabels = character(), bin = numeric())
+    #if(dim(pfam)[2] == 0 | is.null(pfam))
+    if(is.null(pfam))
+      {
+#        pfam = data.frame(start = c(NA, NA, 1, 2), end = rep(NA, 4), pfamLabels = rep(NA, 4), bin = c(1, 2, NA,NA))
+        pfam = data.frame(start = numeric(), end = numeric(), pfamLabels = character(), bin = numeric())
+        labs = character()
+        ylim = 1:2
+        xlim = 1:10
+      }
     else
       {
         #We pad the pfam domains with an extra bin for spacing
-        newlev = max(as.integer(pfam$bin), na.rm=TRUE) + 1
-        levels(pfam$bin) = c(levels(pfam$bin), newlev)
-        pfam[nrow(pfam) + 1, "bin"] = newlev
+        newlev = max(as.integer( pfam$bin ), na.rm = TRUE ) + 1
+        levels( pfam$bin ) = c( levels( pfam$bin ) , newlev )
+        pfam[ nrow( pfam ) + 1, "bin" ] = newlev
+        labs = pfam[ , pfamLabels ]
+        ylim = range( as.integer( pfam$bin ) )
+        xlim = range( pfam$start )
       }
-    pfamPlot = xyplot(bin~start, end = pfam$end,  data= pfam, labs = pfam[,pfamLabels], panel = panel.PFAM, ylab = NULL, xlab = "Amino Acid Position", pfamBins = pfamBins, vertGuides = vertGuides)
+    pfamPlot = xyplot(bin~start, end = pfam$end,  data= pfam, labs = labs, panel = panel.PFAM, ylab = NULL, xlab = "Amino Acid Position", pfamBins = pfamBins, vertGuides = vertGuides, ylim = ylim, xlim = xlim)
     
     list(hydro = hydroPlot, structPred = structPredPlot, pfam = pfamPlot)
   }
 
 metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle = "Amino Acid Position", draw = FALSE, indel.overlay = TRUE, vertGuides = 10)
   {
-    if(!is.null(pfam) & ncol(pfam) > 0)
+    
+    if(!is.null(pfam) & sum(dim(pfam)[1]))
       {
         pfamIRange = IRanges(start = pfam$start, end = pfam$end, names = pfam[,pfamLabels])
         pfamBins = disjointBins(pfamIRange)
@@ -486,6 +504,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
         
       } else {
         pfamBins = NULL
+        pfam = NULL
       }
     plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, pfamBins = pfamBins, vertGuides = vertGuides)
     
@@ -566,7 +585,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     leftpad = max(nchar(as.character(unique(events[[catname]] ))))*.67
     panelLayout = c(  #.3,
       .25,
-      .20*max(pfamBins),
+      .20*max(pfamBins, 2),
       .20*length(unique(events[[catname]])))
    combPlot = update(combPlot,
        #layout = c(1, 4),
