@@ -298,15 +298,28 @@ panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
     
   }
 
-panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), indel.overlay = FALSE, vertGuides, ...)
+panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), indel.overlay = FALSE, vertGuides, lose1 = FALSE, ...)
   {
     if(sum(!is.na(x)) == 0)
       return(TRUE)
 
-    patientid = patientid[subscripts]
+    if(length(subscripts) != length(x))
+      stop("Multiple panels are not currently supported. Please contact the maintainer if you need this functionality")
+
+    #lose1 is true if we added a fake x value of 1 to the data.frame to get lattice to get the right plotting limits. It is not real data so we need to remove it.
+    if(lose1)
+      {
+        len = length(x)
+        x = x[ -len ]
+        y = y[ -len ]
+        end = end[ -len ]
+        patientid = patientid[ -len ]
+      }
+    
+    #patientid = patientid[subscripts]
     #grid.rect(.5, .5, 1, 1, gp = gpar(fill = "grey95"))
     
-    end = end[subscripts]
+    #end = end[subscripts]
     
     nas = which( is.na( end ) )
     end[ nas ] = x[ nas ]
@@ -322,6 +335,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
       }
     ylevs = unique(y)
     yseq = seq(min(as.integer(ylevs))  , max(as.integer(ylevs)) )
+   
     grid.rect(unit(.5, "npc"), unit(yseq, "native"), unit(1, "npc"), unit(1, "native"), gp = gpar(fill = c(rgb(217, 224, 235, max= 255), rgb(205, 205, 205, max = 255)), col = "grey95"))
     if(indel.overlay)
       {
@@ -523,17 +537,12 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
         charvals = as.character(events[[catname]])
         
         events[[catname]] = factor(charvals, levels = cats)
-        if( !nrow( events ) )
-          events[1, position[1] ] = 1
+
         for(reqcat in requiredCats)
           events[nrow(events) + 1 , catname] = reqcat
       }
 
-        #sampleID may be passed in as the name of a column, but we need to have the actual data.
-    if(length(sampleID) != 1 & length(sampleID) != nrow(events) )
-      stop("sampleID must be either the name of a column in the events data.frame or a vector with the same number of elements that events has rows.")
-    if(is(sampleID, "character") & length(sampleID) == 1)
-      sampleID = events[,sampleID]
+
                                         #deal with missing categories (even though there really shouldn't be any!!!!)
     y = events[[catname]]
     levs = levels(y)
@@ -542,9 +551,24 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     tmpcat[missingCat] = "UnCategorized"
     events[[catname]] = factor(tmpcat, levels = c("UnCategorized", levels(events[[catname]])))
 
-    #add counts to category names
-    
+    #if there are no non-na x values lattice refuses to draw the
+    if( all( is.na( events[[ position[ 1 ] ]] ) ) )
+      {
+        lose1 = TRUE
+        events[nrow(events) + 1, position[1] ] = 1
+      } else {
+        lose1 = FALSE
+      }
+
+
+            #sampleID may be passed in as the name of a column, but we need to have the actual data.
+    if(length(sampleID) != 1 & length(sampleID) != nrow(events) )
+      stop("sampleID must be either the name of a column in the events data.frame or a vector with the same number of elements that events has rows.")
+    if(is(sampleID, "character") & length(sampleID) == 1)
+      sampleID = events[,sampleID]
 # counts = tapply(c(rep(NA, times=length(requiredCats)), sampleID),
+
+        #add counts to category names
      counts = tapply( sampleID,
    events[[catname]] ,
    function(x) sum(!is.na(x)))
@@ -555,7 +579,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     levels(events[[catname]]) = paste(levels(events[[catname]]), " (", counts, ")", sep = "")
     
 
-    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay, vertGuides = vertGuides, ylim = range(as.integer(levels(events[[catname]]))))
+    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay, vertGuides = vertGuides, lose1 = lose1)
 
 
     leg = makeColorLegend(colpalette, scale.factor, legend.step)
