@@ -513,50 +513,10 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     structPredPlot = plots$structPred
     pfamPlot = plots$pfam
 
-        #sampleID may be passed in as the name of a column, but we need to have the actual data.
-    if(length(sampleID) != 1 & length(sampleID) != nrow(events) )
-      stop("sampleID must be either the name of a column in the events data.frame or a vector with the same number of elements that events has rows.")
-    if(is(sampleID, "character") & length(sampleID) == 1)
-      sampleID = events[,sampleID]
+
  
     if(!is.null(requiredCats))
       {
-        if(FALSE)
-          {
-        #add fake empty observations for each required category
-        colnm = names(events)
-        colcl = sapply(events, mode)
-        emptyrow = do.call(data.frame, as.list( rep( NA, times = length( colnm ) ) ) )
-        names(emptyrow) = colnm
-        #get full list of factor levels
-        
-        #check which columns are factors to avoid the invalid level warning
-        factcols = which(sapply(events, class) == "factor")
-        
-        levels(emptyrow[[catname]]) = cats
-        emptyrow[factcols] = 1L
-        
-        
-#reorder factors class comes out as c("ordered", "factor")
-        events[[catname]] = factor(as.character(events[[catname]]), levels = cats)
-        for(i in seq(along = requiredCats))
-          {
-            emptyrow[catname] = requiredCats[i]
-            if(nrow(events) == 0)
-              events = rbind(events, emptyrow)
-            else
-              events = rbind(emptyrow, events)
-          }
-                                        #check if this is all of them
-
-        #fix for empty incoming events, not sure why
-        names(events) = colnm
-        for(i in seq(along = colcl))
-          {
-            if(!any( class( events[[ colnm[ i ] ]] ) == "factor" ) )
-              mode(events[[colnm[i]]] ) = colcl[i]
-          }
-      }
         obscats = unique(as.character(events[[catname]]))
         additcats = obscats[which( !( obscats %in% requiredCats ) )]
         cats = unique(c(requiredCats, additcats))
@@ -569,7 +529,11 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
           events[nrow(events) + 1 , catname] = reqcat
       }
 
-
+        #sampleID may be passed in as the name of a column, but we need to have the actual data.
+    if(length(sampleID) != 1 & length(sampleID) != nrow(events) )
+      stop("sampleID must be either the name of a column in the events data.frame or a vector with the same number of elements that events has rows.")
+    if(is(sampleID, "character") & length(sampleID) == 1)
+      sampleID = events[,sampleID]
                                         #deal with missing categories (even though there really shouldn't be any!!!!)
     y = events[[catname]]
     levs = levels(y)
@@ -580,7 +544,8 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 
     #add counts to category names
     
- counts = tapply(c(rep(NA, times=length(requiredCats)), sampleID),
+# counts = tapply(c(rep(NA, times=length(requiredCats)), sampleID),
+     counts = tapply( sampleID,
    events[[catname]] ,
    function(x) sum(!is.na(x)))
     
