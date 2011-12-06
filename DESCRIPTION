@@ -1,7 +1,7 @@
 Package: ProteinVis
 Type: Package
 Title: Protein/Mutation Visualization
-Version: 0.6.0
+Version: 0.7.0
 Date: 2011-07-27
 Author: Gabriel Becker
 Maintainer: Gabriel Becker <gmbecker@ucdavis.edu>
