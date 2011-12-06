@@ -507,7 +507,7 @@ makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposc
     list(hydro = hydroPlot, structPred = structPredPlot, pfam = pfamPlot)
   }
 
-metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle = "Amino Acid Position", draw = FALSE, indel.overlay = TRUE, vertGuides = 10)
+metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle = "Amino Acid Position", draw = FALSE, indel.overlay = TRUE, vertGuides = 10, sequence.counts = NULL)
   {
     
     if(!is.null(pfam) & sum(dim(pfam)[1]))
@@ -544,14 +544,17 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 
 
                                         #deal with missing categories (even though there really shouldn't be any!!!!)
-    y = events[[catname]]
-    levs = levels(y)
-    missingCat = which(is.na(y))
-    tmpcat = as.character(y)
-    tmpcat[missingCat] = "UnCategorized"
-    events[[catname]] = factor(tmpcat, levels = c("UnCategorized", levels(events[[catname]])))
-
-    #if there are no non-na x values lattice refuses to draw the
+    #this will interfere with matching the passed in sequence counts. We weren't using it anyway, so it's disabled for now
+    if(FALSE)
+      {
+        y = events[[catname]]
+        levs = levels(y)
+        missingCat = which(is.na(y))
+        tmpcat = as.character(y)
+        tmpcat[missingCat] = "UnCategorized"
+        events[[catname]] = factor(tmpcat, levels = c("UnCategorized", levels(events[[catname]])))
+      }
+    #if there are no non-na x values lattice refuses to draw properly
     if( all( is.na( events[[ position[ 1 ] ]] ) ) )
       {
         lose1 = TRUE
@@ -568,15 +571,31 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
       sampleID = events[,sampleID]
 # counts = tapply(c(rep(NA, times=length(requiredCats)), sampleID),
 
+
+    numcats = length(unique(events[[catname]]))
         #add counts to category names
-     counts = tapply( sampleID,
-   events[[catname]] ,
-   function(x) sum(!is.na(x)))
-    
     if (!is.factor(events[[catname]]))
       events[[catname]] = factor(events[[catname]])
+    if(is.null(sequence.counts))
+      scounts = rep(NA, times = numcats)
+    else
+      {
+        if(nrow(sequence.counts) != numcats )
+          stop("Number of categories in sequence.counts does not match number of categories in data")
+        ordinds = sapply(as.character(sequence.counts$category), function(x, cats)
+          {
+            which(x == cats)
+          }, cats = levels(events[[catname]]))
+        scounts = sequence.counts$count[ordinds]
+      }
+   
+          mutcounts = tapply( sampleID,
+      events[[catname]] ,
+      function(x) sum(!is.na(x)))
     
-    levels(events[[catname]]) = paste(levels(events[[catname]]), " (", counts, ")", sep = "")
+
+    
+    levels(events[[catname]]) = paste(levels(events[[catname]]), " (", mutcounts, " / ", scounts, ")", sep = "")
     
 
     countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay, vertGuides = vertGuides, lose1 = lose1)
