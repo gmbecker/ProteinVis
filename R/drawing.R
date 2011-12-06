@@ -397,7 +397,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  colinds = sapply(p, function(x) min(ceiling(x / legend.step), 11))
 
              
-                 grid.rect(as.numeric(names(counts)), ypos, vjust = vjust, default.units = "native", width = unit(2, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
+                 grid.rect(as.numeric(names(counts)), ypos, vjust = vjust, default.units = "native", width = unit(.5, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
                } #else
              #Logic for empty rows here
            })
