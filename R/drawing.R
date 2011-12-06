@@ -298,7 +298,7 @@ panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
     
   }
 
-panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), indel.overlay = FALSE, vertGuides, lose1 = FALSE, ...)
+panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), indel.overlay = FALSE, vertGuides, lose1 = FALSE, sequence.counts = NULL, ...)
   {
     if(sum(!is.na(x)) == 0)
       return(TRUE)
@@ -359,17 +359,21 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     grid.rect(unit(.5, "npc"), unit(.5 - gray.yrange/2, "native"), unit(1, "npc"), unit(gray.yrange, "native"), gp = gpar(fill = "grey35"))
     drawVertGuides(vertGuides, "white")
 
-    thing = lapply(ylevs, function(ylev, x, y, patid)
+    haveSeqCounts = !is.null(sequence.counts)
+    thing = lapply(ylevs, function(ylev, x, y, patid, haveSC)
       {
         inds = which(y == ylev)
         
         x = x[inds]
         patid = patid[inds]
-        sampsize = length(unique(patid))
+        if(!haveSC)
+          sampsize = length(unique(patid))
+        else
+          sampsize = sequence.counts$count[as.character(sequence.counts$category) == as.character(ylev)]
         counts = sort(table(x), decreasing = TRUE)
         props = counts/sampsize
         list(samplesize = sampsize, proportions = props, x = x, y  = ylev, counts = counts)
-      }, x = x, y = y, patid = patientid)
+      }, x = x, y = y, patid = patientid, haveSC = haveSeqCounts)
 
 
     
@@ -598,7 +602,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     levels(events[[catname]]) = paste(levels(events[[catname]]), " (", mutcounts, " / ", scounts, ")", sep = "")
     
 
-    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay, vertGuides = vertGuides, lose1 = lose1)
+    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay, vertGuides = vertGuides, lose1 = lose1, sequence.counts = sequence.counts)
 
 
     leg = makeColorLegend(colpalette, scale.factor, legend.step)

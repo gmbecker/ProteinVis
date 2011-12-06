@@ -29,7 +29,7 @@ combineTMDomains = function(tmdf, poscols = c("start", "end"))
     tmmat
   }
 
-calcPlotHeight = function(baseheight, type = "metaCount", pfam, events, catname)
+calcPlotHeight = function(baseheight, type = "metaCount", pfam, categories)
   {
     if(!is.null(pfam) & nrow(pfam))
       {
@@ -44,5 +44,5 @@ calcPlotHeight = function(baseheight, type = "metaCount", pfam, events, catname)
       .20 + .25 + .25 #the .25 is for the hydro, which isn't in the above plot.
 
     
-    baseheight * (1 + .2 /denom * ( max(bins) - 1) + .2 / denom* (length(unique(events[[catname]])) - 5))
+    baseheight * (1 + .2 /denom * ( max(bins) - 1) + .2 / denom* (length(unique(categories)) - 5))
   }
