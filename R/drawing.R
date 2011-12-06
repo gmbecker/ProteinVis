@@ -632,7 +632,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
      
        
      main = main, xlab = subtitle,
-     ylab.right = list(label = "capped log mutation counts", vjust = -1, rot = -90,
+     ylab.right = list(label = "mutation counts", vjust = -1, rot = -90,
      y =  1 - panelLayout[3] / ( 2 * sum(panelLayout) ))
    )  
    # c(combPlot, draw.key(key), layout = c(2, 1))
