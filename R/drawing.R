@@ -362,19 +362,24 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     haveSeqCounts = !is.null(sequence.counts)
     thing = lapply(ylevs, function(ylev, x, y, patid, haveSC)
       {
-        inds = which(y == ylev)
         
+        inds = which(y == ylev)
+        #browser()
         x = x[inds]
         patid = patid[inds]
         if(!haveSC)
           sampsize = length(unique(patid))
         else
-          sampsize = sequence.counts$count[as.character(sequence.counts$category) == as.character(ylev)]
+          {
+            cat = gsub( " \\(.*", "", as.character(ylev))
+          sampsize = sequence.counts$count[sequence.counts$category == cat]
+            }
         counts = sort(table(x), decreasing = TRUE)
         props = counts/sampsize
         list(samplesize = sampsize, proportions = props, x = x, y  = ylev, counts = counts)
       }, x = x, y = y, patid = patientid, haveSC = haveSeqCounts)
 
+    print(thing)
 
     
     lapply(thing, function(myl)
@@ -586,10 +591,10 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
       {
         if(nrow(sequence.counts) != numcats )
           stop("Number of categories in sequence.counts does not match number of categories in data")
-        ordinds = sapply(as.character(sequence.counts$category), function(x, cats)
+        ordinds = unlist(sapply(as.character(sequence.counts$category), function(x, cats)
           {
             which(x == cats)
-          }, cats = levels(events[[catname]]))
+          }, cats = levels(events[[catname]])))
         scounts = sequence.counts$count[ordinds]
       }
    
