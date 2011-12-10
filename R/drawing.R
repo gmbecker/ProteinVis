@@ -581,7 +581,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 # counts = tapply(c(rep(NA, times=length(requiredCats)), sampleID),
 
 
-    numcats = length(unique(events[[catname]]))
+    numcats = length(requiredCats)
         #add counts to category names
     if (!is.factor(events[[catname]]))
       events[[catname]] = factor(events[[catname]])
