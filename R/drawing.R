@@ -26,25 +26,8 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig, vertGuides, ..
     ylim = current.panel.limits()$ylim
     xlim = current.panel.limits()$xlim
 
-    if(!is.null(tm) && nrow(tm) > 0 )
-      {
-        tmmat = combineTMDomains(tm, poscols = tmposcols)
-        apply(tmmat, 1, function(x, ylim)
-              {
-                grid.polygon( c( x , rev( x ) ), rep( ylim , times = c(2, 2) ) , gp = gpar(fill = "grey75", alpha = .5, col = "white"), default.units = "native", draw = TRUE)
-                 }, ylim = ylim)
-      }
-
-    if(!is.null(sig) && nrow(sig) > 0)
-      {
-        apply(sig, 1, function(s, ylim)
-              {
-                sigst = as.numeric(s["start"])
-                sigend = as.numeric(s["end"])
-                sigx = c(sigst, sigend)
-                grid.polygon(c(sigx, rev(sigx)), rep(ylim, times = c(2,2 )), gp = gpar(fill = rgb(180, 255, 180, max = 255), alpha = .5, col = "white"), default.units = "native", draw = TRUE)
-                 }, ylim = ylim)
-      }
+    drawTM(tm, ylim)
+    drawSigP(sig, ylim)
     #comes after tm/sigp stuff to deal with alpha issues
     grid.text("Hydrophobicity", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.9 ))
 
@@ -67,6 +50,34 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig, vertGuides, ..
     TRUE
   }
 
+drawTM = function(tm, ylim)
+  {
+
+    if(!is.null(tm) && nrow(tm) > 0 )
+      {
+        tmmat = combineTMDomains(tm, poscols = tmposcols)
+        apply(tmmat, 1, function(x, ylim)
+              {
+                grid.polygon( c( x , rev( x ) ), rep( ylim , times = c(2, 2) ) , gp = gpar(fill = "grey75", alpha = .5, col = "white"), default.units = "native", draw = TRUE)
+              }, ylim = ylim)
+      }
+    TRUE
+  }
+
+drawSigP = function(sig, ylim)
+  {
+    if(!is.null(sig) && nrow(sig) > 0)
+      {
+        apply(sig, 1, function(s, ylim)
+              {
+                sigst = as.numeric(s["start"])
+                sigend = as.numeric(s["end"])
+                sigx = c(sigst, sigend)
+                grid.polygon(c(sigx, rev(sigx)), rep(ylim, times = c(2,2 )), gp = gpar(fill = rgb(180, 255, 180, max = 255), alpha = .5, col = "white"), default.units = "native", draw = TRUE)
+                 }, ylim = ylim)
+      }
+   TRUE
+  }
 
 panel.psipred = function(x, y, subscripts, cutoff, strand, vertGuides, ...)
   {
@@ -108,27 +119,27 @@ drawPsipred = function(dat, cutoff, xlim)
     
     if(dat$helix[nrow(dat)] >= cutoff & !(nrow(dat) %in% change.helix))
       change.helix = c(change.helix, nrow(dat))
-
+    
     if(dat$strand[nrow(dat)] >= cutoff & !(nrow(dat) %in% change.helix))
       change.strand = c( change.strand , nrow(dat))
-
+    
     if(length(change.helix) >= 2)
       {
-    for(i in seq(1, length(change.helix) - 1, by = 2))
-      {
-        if (change.helix[i+1] - change.helix[i] >= 10)
-          drawCoil(change.helix[i], change.helix[i+1], height = height, center.y = yline, gp = gpar(fill = "red", alpha = .5), scorecol = "black")
+        for(i in seq(1, length(change.helix) - 1, by = 2))
+          {
+            if (change.helix[i+1] - change.helix[i] >= 10)
+              drawCoil(change.helix[i], change.helix[i+1], height = height, center.y = yline, gp = gpar(fill = "red", alpha = .5), scorecol = "black")
+          }
       }
-  }
     if(length(change.strand) >= 2)
       {
         
-    for(j in seq(1, length(change.strand) - 1, by = 2))
-      {
-        if(change.strand[j+1] - change.strand[j] >= 10)
-          
-          drawArrow(change.strand[j], change.strand[j + 1], height = height, center.y = yline, fill = "blue")
-      }
+        for(j in seq(1, length(change.strand) - 1, by = 2))
+          {
+            if(change.strand[j+1] - change.strand[j] >= 10)
+              
+              drawArrow(change.strand[j], change.strand[j + 1], height = height, center.y = yline, fill = "blue")
+          }
   }
     TRUE
   }
@@ -379,9 +390,6 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
         list(samplesize = sampsize, proportions = props, x = x, y  = ylev, counts = counts)
       }, x = x, y = y, patid = patientid, haveSC = haveSeqCounts)
 
-    print(thing)
-
-    
     lapply(thing, function(myl)
            {
              if(sum( !is.na(myl$x) ) > 0)
@@ -415,14 +423,17 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
 
     if(length(indels))
       {
-        indelIRange = IRanges(start = indeldat$start, end = indeldat$end)
         by(indeldat, indeldat$category, function(x)
            {
              
              myIRange = IRanges(start = x$start, end = x$end)
              cov = as.numeric(coverage(myIRange)) #coverage returns coverage starting at 0, not at the beginning of our earliest observation!
+             
              x.s = seq(min(x$start), max(x$end))
              cov = cov[x.s]
+             print(cov)
+             covlag = c(0, cov[-length(cov)])
+             covcat =cumsum( (cov > 0) & (covlag == 0) )  
              y = as.integer(x$category[1])
              heights = sapply(cov, function(x)
                {
@@ -437,15 +448,37 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                    }
                })
 
-             if(indel.overlay)
-               indelseq = c(y - .5 + heights, rep(y - .5, times = length(x.s)))
-             else
-               indelseq = c(y - heights, rep(y, times = length(x.s)))
-             
-              grid.polygon(x = unit( c(x.s, rev(x.s) ), "native"), y = unit(  indelseq, "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
+             useseq = which(heights > 0)
+  
+             by(data.frame(x = x.s[useseq], ht = heights[useseq]), covcat[useseq], function(dat)
+                {
+                  drawOneIndel(dat$x, dat$ht, y = y, overlay = indel.overlay)
+                })
+             if(FALSE)
+               {
+                 if(indel.overlay)
+                   indelseq = c(y - .5 + heights, rep(y - .5, times = length(x.s)))
+                 else
+                   indelseq = c(y - heights, rep(y, times = length(x.s)))
+                 grid.polygon(x = unit( c(x.s, rev(x.s) ), "native"), y = unit(  indelseq, "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
+               }
            } )
+           
       }
         
+    TRUE
+  }
+
+drawOneIndel = function(xs, heights, y, overlay)
+  {
+
+    if(overlay)
+      indelseq = c(y - .5 + heights, rep(y - .5, times = length(xs)))
+    else
+      indelseq = c(y - heights, rep(y, times = length(xs)))
+    
+    grid.polygon(x = unit( c(xs, rev(xs) ), "native"), y = unit(  indelseq, "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
+    
     TRUE
   }
  
