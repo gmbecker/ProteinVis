@@ -31,7 +31,6 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig, vertGuides, ..
     #comes after tm/sigp stuff to deal with alpha issues
     grid.text("Hydrophobicity", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.9 ))
 
-   #browser()
     pos = unit(2, "mm") + unit(1, "strwidth", "Hydrophobicity") + unit(2, "char")
     
     grid.text("Signal Peptide Prediction", pos, unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar( cex=.9 ))
@@ -88,7 +87,6 @@ panel.psipred = function(x, y, subscripts, cutoff, strand, vertGuides, ...)
 
 drawPsipred = function(dat, cutoff, xlim)
   {
-    #grid.text("Secondary Structure", unit(1, "char"), .75, just = "left")
     grid.text("Secondary Structure", unit(2, "mm"),unit(1, "npc") -  unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.8 ))
 
     grid.text("strand", unit(2, "mm") + unit(1, "strwidth", data="Secondary Structure") + unit(6, "mm"),unit(1, "npc") -  unit(2, "mm"), just = c("left", "top"), gp = gpar(cex = .9))
@@ -140,7 +138,7 @@ drawPsipred = function(dat, cutoff, xlim)
               
               drawArrow(change.strand[j], change.strand[j + 1], height = height, center.y = yline, fill = "blue")
           }
-  }
+      }
     TRUE
   }
 
@@ -206,7 +204,6 @@ panel.PFAM = function(x, y, end, subscripts, labs, vertGuides, ...)
     else
       {
         grid.text("No PFAM data available")
-
       }
   }
 
@@ -242,7 +239,7 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
               col = "#111111" #grey
             
             rot = 0
-            #check if domain is very short eg NOTCH
+            #check if domain is very short eg NOTCH. If so, rotate the name
             if( (barlen) / protlen <= .04)
               {
                 rot = 90
@@ -255,14 +252,13 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
               }
                 
             
-            #.45 for one row ...
+            
             step = .6/nrow
             ypos = 1 - (.15 / nrow ) - step*bin
             #grid.lines(unit(c(st, end), "native"), unit(nrow - bin + 1, "native"), gp = gpar(col = col, lex = 20, alpha=.5))
             grid.rect(unit(st, "native"),
                       unit(nrow - bin + 1, "native"),
                       width = unit(end - st, "native"),
-                      #height = unit(10, "points"),
                       height = unit(.45, "native"),
                       just = c("left", "center"), gp = gpar(fill = col, alpha = .5)) 
             grid.text(lab, unit((st + end) /2, "native"), y =textypos, rot = rot, gp = gpar(cex = .67))
@@ -333,12 +329,8 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
         end = end[ -len ]
         patientid = patientid[ -len ]
       }
-    
-    #patientid = patientid[subscripts]
-    #grid.rect(.5, .5, 1, 1, gp = gpar(fill = "grey95"))
-    
-    #end = end[subscripts]
-    
+
+    #if non-indels are indicated by end == NA, then change it so that start == end
     nas = which( is.na( end ) )
     end[ nas ] = x[ nas ]
     
@@ -370,8 +362,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     ygridseq = seq(min(as.integer(y), na.rm=TRUE) - .5, max(as.integer(y), na.rm=TRUE) + .5, by = 1)
     
     grid.segments(unit(0, "npc"), ygridseq  , unit(1, "npc"), ygridseq, gp = gpar(col = "white"), default.units = "native")
-    #grid.segments(unit(seq(1, max(x, na.rm=TRUE), length.out = 10), "native"), unit(0, "npc"), unit(seq(1, max(x, na.rm=TRUE), length.out = 10 ), "native"), unit(1, "npc"), gp = gpar(col = "white"))
-    
+        
     ylim = current.panel.limits()$ylim
     gray.yrange = .5 - ylim[1]
     grid.rect(unit(.5, "npc"), unit(.5 - gray.yrange/2, "native"), unit(1, "npc"), unit(gray.yrange, "native"), gp = gpar(fill = "grey35"))
@@ -382,7 +373,6 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
       {
         
         inds = which(y == ylev)
-        #browser()
         x = x[inds]
         patid = patid[inds]
         if(!haveSC)
@@ -494,27 +484,25 @@ drawOneIndel = function(xs, heights, y, overlay)
  
 proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", draw = FALSE)
   {
-    
-    pfamIRange = IRanges(start = pfam$start, end = pfam$end, names = pfam[,pfamLabels])
-    pfamBins = disjointBins(pfamIRange)
-    pfam$bin = factor(pfamBins, levels = 0:(max(pfamBins) + 1))
-      
-    plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, pfamBins = pfamBins)
+
+    pfam = fixPFAM( pfam , pfamLabels)
+       
+    plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels)
     hydroPlot = plots$hydro
 
     structPredPlot = plots$structPred
     pfamPlot = plots$pfam
-
     
-    cplot = update(c(pfamPlot,
-             structPredPlot,
-             hydroPlot,
-             x.same = TRUE),
-           layout = c(1, 3),
-           xlim = xlim,
-           main = main,
-           par.settings = list(layout.heights = list(panel = c(.55, .55, 1.5))) #only one pfam row now!
-           )
+    cplot = update(
+      c(pfamPlot,
+        structPredPlot,
+        hydroPlot,
+        x.same = TRUE),
+      layout = c(1, 3),
+      xlim = xlim,
+      main = main,
+      par.settings = list(layout.heights = list(panel = c(.55, .55, 1.5))) #only one pfam row now!
+      )
     if(draw)
       print(cplot)
     else
@@ -538,7 +526,6 @@ makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposc
     #if(dim(pfam)[2] == 0 | is.null(pfam))
     if(is.null(pfam))
       {
-#        pfam = data.frame(start = c(NA, NA, 1, 2), end = rep(NA, 4), pfamLabels = rep(NA, 4), bin = c(1, 2, NA,NA))
         pfam = data.frame(start = numeric(), end = numeric(), pfamLabels = character(), bin = numeric())
         labs = character()
         ylim = 1:2
@@ -570,8 +557,6 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 
     structPredPlot = plots$structPred
     pfamPlot = plots$pfam
-
-
  
     if(!is.null(requiredCats))
       {
@@ -623,7 +608,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
       scounts = rep(NA, times = numcats)
     else
       {
-        #if(nrow(sequence.counts) != numcats )
+        #XXX If we are demanding this information be the same, why do we need it in 2 places??
         if(length(setdiff(as.character(sequence.counts$category), requiredCats)))
           stop("Categories in sequence.counts and requiredCats do not match")
         ordinds = unlist(sapply(as.character(sequence.counts$category), function(x, cats)
@@ -637,20 +622,15 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
       events[[catname]] ,
       function(x) sum(!is.na(x)))
     
-    levels(events[[catname]]) = paste(levels(events[[catname]]), " (", mutcounts, " / ", scounts, ")", sep = "")
-    
+    levels(events[[catname]]) = paste(levels(events[[catname]]), " (", mutcounts, " / ", scounts, ")", sep = "") 
 
     countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay, vertGuides = vertGuides, lose1 = lose1, sequence.counts = sequence.counts)
 
-
     leg = makeColorLegend(colpalette, scale.factor, legend.step)
-
     cat.names = levels(events[[catname]])
     
     combPlot = combinePlots(countPlot, pfamPlot, structPredPlot, leg, cat.names, main, subtitle, xlim )
       
-   # c(combPlot, draw.key(key), layout = c(2, 1))
-    
     if(draw)
       print(combPlot)
     else
@@ -737,8 +717,6 @@ makeColorLegend = function(colpalette, scalefactor, step)
     mychildren = do.call("gList", c(colboxes))# , txtlabs ))
     gTree(height = unit(1, "inches"), children = mychildren)
   }
-
-
 
 axis.combined = function(side, ...)
   {
