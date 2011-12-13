@@ -647,7 +647,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 makeColorLegend = function(colpalette, scalefactor, step)
   {
     ncols = length(colpalette) + 3
-    boxwidth = 1 / (ncols + 3)
+    boxwidth = 1 / (2 * (ncols + 3) )
     lab = grid.text("Location Percent Mutated", y = .85, x = boxwidth, gp = gpar(cex = .9), draw = FALSE, just = "left")
 
     colboxes = lapply(seq(along = colpalette), function(pos, cols, width)
@@ -655,20 +655,13 @@ makeColorLegend = function(colpalette, scalefactor, step)
         grid.rect(x = (pos+1)*width , y = .30, width = width, height = .40, gp = gpar(col = cols[pos], fill = cols[pos]), draw = FALSE)
       },  cols = colpalette, width = boxwidth )
 
-    if(FALSE)
-      {
-    
-        txtlabs  = lapply(seq(along = colpalette), function(pos, cols, width)
-          {
-            grid.text(paste(pos, "%", sep = ""), x = (pos + 1)*width, y = .3, draw = FALSE)
-          }, cols = colpalette, width = boxwidth)
-      }
+
     length(colboxes) = ncols
     n = length(colpalette)
     colboxes[[n+1]]= grid.text("0%", x = unit(1*boxwidth, "npc"), y = .3, draw = FALSE, just = c("right", "center"), gp = gpar(cex = .8))
     colboxes[[n+2]]= grid.text(">10%", x = (n + 2)*boxwidth, y = .3, just = c("left", "center"), draw = FALSE, gp = gpar(cex = .8))
-    colboxes[[n+3]] = grid.rect(x = (n + 3.5) * boxwidth, y = .3, width = boxwidth, height = .4, gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5), draw = FALSE )
-    colboxes[[n+4]] = grid.text("indel", x = (n+4.5) * boxwidth, y = .3, just = c("left", "center"), draw = FALSE, gp = gpar(cex = .8))
+    colboxes[[n+3]] = grid.rect(x = (n + 7) * boxwidth, y = .3, width = boxwidth, height = .4, gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5), draw = FALSE )
+    colboxes[[n+4]] = grid.text("indel", x = (n+8) * boxwidth, y = .3, just = c("left", "center"), draw = FALSE, gp = gpar(cex = .8))
     colboxes[[n+5]] = lab
     
     mychildren = do.call("gList", c(colboxes))# , txtlabs ))
