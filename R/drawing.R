@@ -626,10 +626,10 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 
     countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay, vertGuides = vertGuides, lose1 = lose1, sequence.counts = sequence.counts)
 
-    leg = makeColorLegend(colpalette, scale.factor, legend.step)
+    #leg = makeColorLegend(colpalette, scale.factor, legend.step)
     cat.names = levels(events[[catname]])
     
-    combPlot = combinePlots(countPlot, pfamPlot, structPredPlot, leg, cat.names, main, subtitle, xlim )
+    combPlot = combinePlots(countPlot, pfamPlot, structPredPlot,  cat.names, main, subtitle, xlim , colpalette)
       
     if(draw)
       print(combPlot)
@@ -637,7 +637,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
       combPlot
   }
 
-combinePlots = function(countPlot, pfamPlot, structPlot, color.legend, cat.names, main, subtitle, xlim)
+combinePlots = function(countPlot, pfamPlot, structPlot,  cat.names, main, subtitle, xlim, col.palette)
   {
   
     combPlot = c(  #hydroPlot,
@@ -658,22 +658,22 @@ combinePlots = function(countPlot, pfamPlot, structPlot, color.legend, cat.names
       xlim = xlim,
       axis = axis.combined,
       par.settings = list(
-      layout.heights = list(
-        panel = panelLayout,
-        key.top = .20,
-        xlab.top = 0,
-        axis.top = 0),
+        layout.heights = list(
+          panel = panelLayout,
+          key.top = .20,
+          xlab.top = 0,
+          axis.top = 0),
         layout.widths = list(
           right.padding = 5,
           left.padding = leftpad)),
-      legend = list(top = list( fun = color.legend )),
+      legend = list(top = list( fun = makeColorLegend, args = list( colpalette = col.palette))),
       
       
       main = main, xlab = subtitle,
       ylab.right = list(label = "mutation counts", vjust = -1, rot = -90,
         y =  1 - panelLayout[3] / ( 2 * sum(panelLayout) ))
       )
-
+    
     return(combPlot)
   }
 
@@ -694,8 +694,11 @@ fixPFAM = function(pfam,  labels)
   }
 
 
-makeColorLegend = function(colpalette, scalefactor, step)
+makeColorLegend = function(colpalette)
   {
+
+    #lyt = trellis.currentLayout()
+    
     ncols = length(colpalette) + 3
     boxwidth = 1 / (2 * (ncols + 3) )
     lab = grid.text("Location Percent Mutated", y = .85, x = boxwidth, gp = gpar(cex = .9), draw = FALSE, just = "left")
