@@ -607,7 +607,6 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
         lose1 = FALSE
       }
 
-
             #sampleID may be passed in as the name of a column, but we need to have the actual data.
     if(length(sampleID) != 1 & length(sampleID) != nrow(events) )
       stop("sampleID must be either the name of a column in the events data.frame or a vector with the same number of elements that events has rows.")
@@ -634,11 +633,9 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
         scounts = sequence.counts$count[ordinds]
       }
    
-          mutcounts = tapply( sampleID,
+    mutcounts = tapply( sampleID,
       events[[catname]] ,
       function(x) sum(!is.na(x)))
-    
-
     
     levels(events[[catname]]) = paste(levels(events[[catname]]), " (", mutcounts, " / ", scounts, ")", sep = "")
     
