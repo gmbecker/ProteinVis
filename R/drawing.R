@@ -26,25 +26,8 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig, vertGuides, ..
     ylim = current.panel.limits()$ylim
     xlim = current.panel.limits()$xlim
 
-    if(!is.null(tm) && nrow(tm) > 0 )
-      {
-        tmmat = combineTMDomains(tm, poscols = tmposcols)
-        apply(tmmat, 1, function(x, ylim)
-              {
-                grid.polygon( c( x , rev( x ) ), rep( ylim , times = c(2, 2) ) , gp = gpar(fill = "grey75", alpha = .5, col = "white"), default.units = "native", draw = TRUE)
-                 }, ylim = ylim)
-      }
-
-    if(!is.null(sig) && nrow(sig) > 0)
-      {
-        apply(sig, 1, function(s, ylim)
-              {
-                sigst = as.numeric(s["start"])
-                sigend = as.numeric(s["end"])
-                sigx = c(sigst, sigend)
-                grid.polygon(c(sigx, rev(sigx)), rep(ylim, times = c(2,2 )), gp = gpar(fill = rgb(180, 255, 180, max = 255), alpha = .5, col = "white"), default.units = "native", draw = TRUE)
-                 }, ylim = ylim)
-      }
+    drawTM(tm, ylim)
+    drawSigP(sig, ylim)
     #comes after tm/sigp stuff to deal with alpha issues
     grid.text("Hydrophobicity", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.9 ))
 
@@ -67,6 +50,34 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig, vertGuides, ..
     TRUE
   }
 
+drawTM = function(tm, ylim)
+  {
+
+    if(!is.null(tm) && nrow(tm) > 0 )
+      {
+        tmmat = combineTMDomains(tm, poscols = tmposcols)
+        apply(tmmat, 1, function(x, ylim)
+              {
+                grid.polygon( c( x , rev( x ) ), rep( ylim , times = c(2, 2) ) , gp = gpar(fill = "grey75", alpha = .5, col = "white"), default.units = "native", draw = TRUE)
+              }, ylim = ylim)
+      }
+    TRUE
+  }
+
+drawSigP = function(sig, ylim)
+  {
+    if(!is.null(sig) && nrow(sig) > 0)
+      {
+        apply(sig, 1, function(s, ylim)
+              {
+                sigst = as.numeric(s["start"])
+                sigend = as.numeric(s["end"])
+                sigx = c(sigst, sigend)
+                grid.polygon(c(sigx, rev(sigx)), rep(ylim, times = c(2,2 )), gp = gpar(fill = rgb(180, 255, 180, max = 255), alpha = .5, col = "white"), default.units = "native", draw = TRUE)
+                 }, ylim = ylim)
+      }
+   TRUE
+  }
 
 panel.psipred = function(x, y, subscripts, cutoff, strand, vertGuides, ...)
   {
@@ -108,27 +119,27 @@ drawPsipred = function(dat, cutoff, xlim)
     
     if(dat$helix[nrow(dat)] >= cutoff & !(nrow(dat) %in% change.helix))
       change.helix = c(change.helix, nrow(dat))
-
+    
     if(dat$strand[nrow(dat)] >= cutoff & !(nrow(dat) %in% change.helix))
       change.strand = c( change.strand , nrow(dat))
-
+    
     if(length(change.helix) >= 2)
       {
-    for(i in seq(1, length(change.helix) - 1, by = 2))
-      {
-        if (change.helix[i+1] - change.helix[i] >= 10)
-          drawCoil(change.helix[i], change.helix[i+1], height = height, center.y = yline, gp = gpar(fill = "red", alpha = .5), scorecol = "black")
+        for(i in seq(1, length(change.helix) - 1, by = 2))
+          {
+            if (change.helix[i+1] - change.helix[i] >= 10)
+              drawCoil(change.helix[i], change.helix[i+1], height = height, center.y = yline, gp = gpar(fill = "red", alpha = .5), scorecol = "black")
+          }
       }
-  }
     if(length(change.strand) >= 2)
       {
         
-    for(j in seq(1, length(change.strand) - 1, by = 2))
-      {
-        if(change.strand[j+1] - change.strand[j] >= 10)
-          
-          drawArrow(change.strand[j], change.strand[j + 1], height = height, center.y = yline, fill = "blue")
-      }
+        for(j in seq(1, length(change.strand) - 1, by = 2))
+          {
+            if(change.strand[j+1] - change.strand[j] >= 10)
+              
+              drawArrow(change.strand[j], change.strand[j + 1], height = height, center.y = yline, fill = "blue")
+          }
   }
     TRUE
   }
@@ -184,13 +195,14 @@ drawCoil = function(start, end, height, center.y, nativelims = current.panel.lim
     TRUE
   }
 
-
-panel.PFAM = function(x, y, end, subscripts, labs,  pfamBins, vertGuides, ...)
+#x is the position on the protein, y is the pfam bin (pfam$bin)
+panel.PFAM = function(x, y, end, subscripts, labs, vertGuides, ...)
   {
     drawVertGuides(vertGuides, "grey80")
     grid.text("PFAM Domains", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.8 ))
-    if(!is.null(pfamBins))
-      drawPFAM(data.frame(start = x, end = end, labels = labs, bin = y), labcol = "labels", bins = pfamBins, xlim = current.panel.limits()$xlim)
+    #if(!is.null(pfamBins))
+    if(any(!is.na(x)))
+      drawPFAM(data.frame(start = x, end = end, labels = labs, bin = y), labcol = "labels", xlim = current.panel.limits()$xlim)
     else
       {
         grid.text("No PFAM data available")
@@ -198,7 +210,7 @@ panel.PFAM = function(x, y, end, subscripts, labs,  pfamBins, vertGuides, ...)
       }
   }
 
-drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName", bins, xlim)
+drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName", xlim)
   {
     nrow = length(levels(dat$bin))
     hseq = unique(dat$bin)#seq(min(dat$bin, na.rm=TRUE), max(dat$bins, na.rm=TRUE))
@@ -260,6 +272,8 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
           TRUE
   }
 
+if(FALSE)
+  {
 panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
   {
     if(missing(colpalette))
@@ -280,7 +294,9 @@ panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
         patid = patid[inds]
         sampsize = length(unique(patid))
         counts = sort(table(x))
-        props = counts/sampsize
+        non-zeros = which(sampsize != 0)
+        props = counts / sampsize
+        
         list(samplesize = sampsize, proportions = props, x = x, y  = ylev, counts = counts)
       }, x = x, y = y, patid = patientid)
 
@@ -298,7 +314,9 @@ panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
     
   }
 
-panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), indel.overlay = FALSE, vertGuides, lose1 = FALSE, ...)
+}
+
+panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), indel.overlay = FALSE, vertGuides, lose1 = FALSE, sequence.counts = NULL, ...)
   {
     if(sum(!is.na(x)) == 0)
       return(TRUE)
@@ -334,12 +352,12 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
         y = y[-indels]
       }
     ylevs = unique(y)
-    yseq = seq(min(as.integer(ylevs))  , max(as.integer(ylevs)) )
+    yseq = seq(min(as.integer(ylevs), na.rm=TRUE)  , max(as.integer(ylevs), na.rm=TRUE) )
    
     grid.rect(unit(.5, "npc"), unit(yseq, "native"), unit(1, "npc"), unit(1, "native"), gp = gpar(fill = c(rgb(217, 224, 235, max= 255), rgb(205, 205, 205, max = 255)), col = "grey95"))
     if(indel.overlay)
       {
-        scaleseq = seq(min(as.integer(ylevs)) - .5 , max(as.integer(ylevs)) +.5)
+        scaleseq = seq(min(as.integer(ylevs), na.rm=TRUE) - .5 , max(as.integer(ylevs), na.rm=TRUE) +.5)
         hdenom = scale.factor
         #grid.segments(unit(0, "npc"), scaleseq, unit(1, "npc"), scaleseq, default.units = "native", gp = gpar(col = c("black"), lex = 1.5))
     }
@@ -359,20 +377,29 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     grid.rect(unit(.5, "npc"), unit(.5 - gray.yrange/2, "native"), unit(1, "npc"), unit(gray.yrange, "native"), gp = gpar(fill = "grey35"))
     drawVertGuides(vertGuides, "white")
 
-    thing = lapply(ylevs, function(ylev, x, y, patid)
+    haveSeqCounts = !is.null(sequence.counts)
+    thing = lapply(ylevs, function(ylev, x, y, patid, haveSC)
       {
-        inds = which(y == ylev)
         
+        inds = which(y == ylev)
+        #browser()
         x = x[inds]
         patid = patid[inds]
-        sampsize = length(unique(patid))
+        if(!haveSC)
+          sampsize = length(unique(patid))
+        else
+          {
+            cat = gsub( " \\(.*", "", as.character(ylev))
+          sampsize = sequence.counts$count[sequence.counts$category == cat]
+            }
         counts = sort(table(x), decreasing = TRUE)
-        props = counts/sampsize
+        nonzero = which(sampsize != 0)
+        props = numeric(length(sampsize))
+        props[nonzero] = (counts/sampsize)[nonzero]
+        props[-nonzero] = 0 #XXX should this be 0, or Inf, or NA???
         list(samplesize = sampsize, proportions = props, x = x, y  = ylev, counts = counts)
-      }, x = x, y = y, patid = patientid)
+      }, x = x, y = y, patid = patientid, haveSC = haveSeqCounts)
 
-
-    
     lapply(thing, function(myl)
            {
              if(sum( !is.na(myl$x) ) > 0)
@@ -397,7 +424,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  colinds = sapply(p, function(x) min(ceiling(x / legend.step), 11))
 
              
-                 grid.rect(as.numeric(names(counts)), ypos, vjust = vjust, default.units = "native", width = unit(2, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
+                 grid.rect(as.numeric(names(counts)), ypos, vjust = vjust, default.units = "native", width = unit(.5, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
                } #else
              #Logic for empty rows here
            })
@@ -406,14 +433,17 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
 
     if(length(indels))
       {
-        indelIRange = IRanges(start = indeldat$start, end = indeldat$end)
         by(indeldat, indeldat$category, function(x)
            {
              
              myIRange = IRanges(start = x$start, end = x$end)
              cov = as.numeric(coverage(myIRange)) #coverage returns coverage starting at 0, not at the beginning of our earliest observation!
+             
              x.s = seq(min(x$start), max(x$end))
              cov = cov[x.s]
+             print(cov)
+             covlag = c(0, cov[-length(cov)])
+             covcat =cumsum( (cov > 0) & (covlag == 0) )  
              y = as.integer(x$category[1])
              heights = sapply(cov, function(x)
                {
@@ -428,15 +458,37 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                    }
                })
 
-             if(indel.overlay)
-               indelseq = c(y - .5 + heights, rep(y - .5, times = length(x.s)))
-             else
-               indelseq = c(y - heights, rep(y, times = length(x.s)))
-             
-              grid.polygon(x = unit( c(x.s, rev(x.s) ), "native"), y = unit(  indelseq, "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
+             useseq = which(heights > 0)
+  
+             by(data.frame(x = x.s[useseq], ht = heights[useseq]), covcat[useseq], function(dat)
+                {
+                  drawOneIndel(dat$x, dat$ht, y = y, overlay = indel.overlay)
+                })
+             if(FALSE)
+               {
+                 if(indel.overlay)
+                   indelseq = c(y - .5 + heights, rep(y - .5, times = length(x.s)))
+                 else
+                   indelseq = c(y - heights, rep(y, times = length(x.s)))
+                 grid.polygon(x = unit( c(x.s, rev(x.s) ), "native"), y = unit(  indelseq, "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
+               }
            } )
+           
       }
         
+    TRUE
+  }
+
+drawOneIndel = function(xs, heights, y, overlay)
+  {
+
+    if(overlay)
+      indelseq = c(y - .5 + heights, rep(y - .5, times = length(xs)))
+    else
+      indelseq = c(y - heights, rep(y, times = length(xs)))
+    
+    grid.polygon(x = unit( c(xs, rev(xs) ), "native"), y = unit(  indelseq, "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
+    
     TRUE
   }
  
@@ -461,7 +513,7 @@ proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmpo
            layout = c(1, 3),
            xlim = xlim,
            main = main,
-           par.settings = list(layout.heights = list(panel = c(.3 + .25*max(pfamBins), .55, 1.5)))
+           par.settings = list(layout.heights = list(panel = c(.55, .55, 1.5))) #only one pfam row now!
            )
     if(draw)
       print(cplot)
@@ -470,7 +522,7 @@ proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmpo
 
   }
 
-makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", cutoff = if(max(structPred$helix > 1)) 6 else .6, pfamBins, vertGuides)
+makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", cutoff = if(max(structPred$helix > 1)) 6 else .6, vertGuides)
   {
 
     if(dim(hydro)[2] == 0 | is.null(hydro))
@@ -502,25 +554,17 @@ makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposc
         ylim = range( as.integer( pfam$bin ) )
         xlim = range( pfam$start )
       }
-    pfamPlot = xyplot(bin~start, end = pfam$end,  data= pfam, labs = labs, panel = panel.PFAM, ylab = NULL, xlab = "Amino Acid Position", pfamBins = pfamBins, vertGuides = vertGuides, ylim = ylim, xlim = xlim)
+    pfamPlot = xyplot(bin~start, end = pfam$end,  data= pfam, labs = labs, panel = panel.PFAM, ylab = NULL, xlab = "Amino Acid Position", vertGuides = vertGuides, ylim = ylim, xlim = xlim)
     
     list(hydro = hydroPlot, structPred = structPredPlot, pfam = pfamPlot)
   }
 
 metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle = "Amino Acid Position", draw = FALSE, indel.overlay = TRUE, vertGuides = 10, sequence.counts = NULL)
   {
+
+    pfam = fixPFAM(pfam, pfamLabels)
     
-    if(!is.null(pfam) & sum(dim(pfam)[1]))
-      {
-        pfamIRange = IRanges(start = pfam$start, end = pfam$end, names = pfam[,pfamLabels])
-        pfamBins = disjointBins(pfamIRange)
-        pfam$bin = factor(pfamBins, levels = 0:(max(pfamBins + 1)))
-        
-      } else {
-        pfamBins = NULL
-        pfam = NULL
-      }
-    plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, pfamBins = pfamBins, vertGuides = vertGuides)
+    plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides)
     
     hydroPlot = plots$hydro
 
@@ -563,7 +607,6 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
         lose1 = FALSE
       }
 
-
             #sampleID may be passed in as the name of a column, but we need to have the actual data.
     if(length(sampleID) != 1 & length(sampleID) != nrow(events) )
       stop("sampleID must be either the name of a column in the events data.frame or a vector with the same number of elements that events has rows.")
@@ -572,7 +615,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 # counts = tapply(c(rep(NA, times=length(requiredCats)), sampleID),
 
 
-    numcats = length(unique(events[[catname]]))
+    numcats = length(requiredCats)
         #add counts to category names
     if (!is.factor(events[[catname]]))
       events[[catname]] = factor(events[[catname]])
@@ -580,67 +623,94 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
       scounts = rep(NA, times = numcats)
     else
       {
-        if(nrow(sequence.counts) != numcats )
-          stop("Number of categories in sequence.counts does not match number of categories in data")
-        ordinds = sapply(as.character(sequence.counts$category), function(x, cats)
+        #if(nrow(sequence.counts) != numcats )
+        if(length(setdiff(as.character(sequence.counts$category), requiredCats)))
+          stop("Categories in sequence.counts and requiredCats do not match")
+        ordinds = unlist(sapply(as.character(sequence.counts$category), function(x, cats)
           {
             which(x == cats)
-          }, cats = levels(events[[catname]]))
+          }, cats = levels(events[[catname]])))
         scounts = sequence.counts$count[ordinds]
       }
    
-          mutcounts = tapply( sampleID,
+    mutcounts = tapply( sampleID,
       events[[catname]] ,
       function(x) sum(!is.na(x)))
-    
-
     
     levels(events[[catname]]) = paste(levels(events[[catname]]), " (", mutcounts, " / ", scounts, ")", sep = "")
     
 
-    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay, vertGuides = vertGuides, lose1 = lose1)
+    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay, vertGuides = vertGuides, lose1 = lose1, sequence.counts = sequence.counts)
 
 
     leg = makeColorLegend(colpalette, scale.factor, legend.step)
-    
-    combPlot = c(  #hydroPlot,
-      structPredPlot,
-      pfamPlot,
-      countPlot,
-      x.same=TRUE, y.same=NA)#, merge.legends=TRUE)
 
-    leftpad = max(nchar(as.character(unique(events[[catname]] ))))*.67
-    panelLayout = c(  #.3,
-      .25,
-      .20*max(pfamBins, 2),
-      .20*length(unique(events[[catname]])))
-   combPlot = update(combPlot,
-       #layout = c(1, 4),
-     layout = c(1, 3),
-     xlim = xlim,
-     axis = axis.combined,
-     par.settings = list(
-       layout.heights = list(
-         panel = panelLayout,
-         key.top = .20,
-         xlab.top = 0,
-         axis.top = 0),
-       layout.widths = list(
-         right.padding = 5,
-         left.padding = leftpad)),
-     legend = list(top = list(fun=leg)),
-     
-       
-     main = main, xlab = subtitle,
-     ylab.right = list(label = "capped log mutation counts", vjust = -1, rot = -90,
-     y =  1 - panelLayout[3] / ( 2 * sum(panelLayout) ))
-   )  
+    cat.names = levels(events[[catname]])
+    
+    combPlot = combinePlots(countPlot, pfamPlot, structPredPlot, leg, cat.names, main, subtitle, xlim )
+      
    # c(combPlot, draw.key(key), layout = c(2, 1))
     
     if(draw)
       print(combPlot)
     else
       combPlot
+  }
+
+combinePlots = function(countPlot, pfamPlot, structPlot, color.legend, cat.names, main, subtitle, xlim)
+  {
+  
+    combPlot = c(  #hydroPlot,
+      structPlot,
+      pfamPlot,
+      countPlot,
+      x.same=TRUE, y.same=NA)#, merge.legends=TRUE)
+
+    leftpad = max(nchar(cat.names))*.67
+  
+    panelLayout = c(  #.3,
+      .25,
+      .20*2, #*max(pfamBins, 2),
+        .20*length(cat.names))
+    combPlot = update(combPlot,
+                                        #layout = c(1, 4),
+      layout = c(1, 3),
+      xlim = xlim,
+      axis = axis.combined,
+      par.settings = list(
+      layout.heights = list(
+        panel = panelLayout,
+        key.top = .20,
+        xlab.top = 0,
+        axis.top = 0),
+        layout.widths = list(
+          right.padding = 5,
+          left.padding = leftpad)),
+      legend = list(top = list( fun = color.legend )),
+      
+      
+      main = main, xlab = subtitle,
+      ylab.right = list(label = "mutation counts", vjust = -1, rot = -90,
+        y =  1 - panelLayout[3] / ( 2 * sum(panelLayout) ))
+      )
+
+    return(combPlot)
+  }
+
+fixPFAM = function(pfam,  labels)
+  {
+
+    if(!is.null(pfam) & sum(dim(pfam)[1]))
+      {
+        pfamIRange = IRanges(start = pfam$start, end = pfam$end, names = pfam[ , labels ])
+        pfamBins = disjointBins(pfamIRange)
+        pfam$bin = factor(pfamBins, levels = 0:(max(pfamBins + 1)))
+        
+      } else {
+        pfamBins = NULL
+        pfam = NULL
+      }
+    pfam
   }
 
 
