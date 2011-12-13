@@ -662,7 +662,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 
 combinePlots = function(countPlot, pfamPlot, structPlot, color.legend, cat.names, main, subtitle, xlim)
   {
-    browser()
+  
     combPlot = c(  #hydroPlot,
       structPlot,
       pfamPlot,
