@@ -347,17 +347,17 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     yseq = seq(min(as.integer(ylevs), na.rm=TRUE)  , max(as.integer(ylevs), na.rm=TRUE) )
    
     grid.rect(unit(.5, "npc"), unit(yseq, "native"), unit(1, "npc"), unit(1, "native"), gp = gpar(fill = c(rgb(217, 224, 235, max= 255), rgb(205, 205, 205, max = 255)), col = "grey95"))
-    if(indel.overlay)
-      {
+ #   if(indel.overlay)
+ #     {
         scaleseq = seq(min(as.integer(ylevs), na.rm=TRUE) - .5 , max(as.integer(ylevs), na.rm=TRUE) +.5)
-        hdenom = scale.factor
+ #       hdenom = scale.factor
         #grid.segments(unit(0, "npc"), scaleseq, unit(1, "npc"), scaleseq, default.units = "native", gp = gpar(col = c("black"), lex = 1.5))
-    }
-    else
-      {
-        hdenom = 2 * scale.factor
-        grid.segments(unit(0, "npc"), yseq, unit(1, "npc"), yseq, default.units = "native", gp = gpar(col = c("black"), lex = 1.5))
-    }
+ #   }
+ #   else
+ #     {
+ #       hdenom = 2 * scale.factor
+ #       grid.segments(unit(0, "npc"), yseq, unit(1, "npc"), yseq, default.units = "native", gp = gpar(col = c("black"), lex = 1.5))
+ #   }
 
     ygridseq = seq(min(as.integer(y), na.rm=TRUE) - .5, max(as.integer(y), na.rm=TRUE) + .5, by = 1)
     
@@ -401,14 +401,17 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                                         #browser()
     
                  if(logscale)
-                   heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / hdenom)
+                 #  heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / hdenom)
+                   heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor)
                  else
-                   heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / hdenom)
+#                   heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / hdenom)
+                   heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / scale.factor)
+                   
 
-                 if(indel.overlay)
+#                 if(indel.overlay)
                    ypos = as.integer(y) - .5
-                 else
-                   ypos = as.integer(y)
+ #                else
+ #                  ypos = as.integer(y)
 
                  vjust = 0
                  colinds = sapply(p, function(x) min(ceiling(x / legend.step), 11))
@@ -441,10 +444,11 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                    0
                  else
                    {
+                     #XXX calculating heights here
                      if(logscale)
-                       .05 + .9 * min( log( x, base = logbase), scale.factor ) / hdenom
+                       .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor
                  else
-                   .9 * min( x, scale.factor ) / hdenom
+                   .9 * min( x, scale.factor ) / scale.factor
                    }
                })
 
@@ -472,10 +476,10 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
 drawOneIndel = function(xs, heights, y, overlay)
   {
 
-    if(overlay)
+#    if(overlay)
       indelseq = c(y - .5 + heights, rep(y - .5, times = length(xs)))
-    else
-      indelseq = c(y - heights, rep(y, times = length(xs)))
+ #   else
+  #    indelseq = c(y - heights, rep(y, times = length(xs)))
     
     grid.polygon(x = unit( c(xs, rev(xs) ), "native"), y = unit(  indelseq, "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
     
@@ -720,17 +724,43 @@ makeFullLegend = function(values , colpalette, legend.step, scale.factor, log.ba
 
     #draw colorscale and text
     pushViewport(vp2)
-
     allgrobs = colorScaleBox(colpalette, legend.step, allgrobs, indelcol)
     popViewport(1) #vp2
 
+    #draw height scale and text
     pushViewport(vp1)
+    allgrobs = heightScaleBox(values, scale.factor, one.cat.height, log.base, allgrobs)
     popViewport(1) #vp1
+    
     allgrobs[[length(allgrobs) + 1]] = grid.text(title, unit(2, "mm"), gp = gpar(fontsize = 24, fontface = "bold"), just = "left")
     popViewport(1) #legvp
     do.call(gList, allgrobs)
   }
 
+heightScaleBox = function(values, scale.factor, one.cat.height, log.base, groblist = list())
+  {
+    #put lines at positions 2/6, 3/6, 4/6, 5/6 npc
+    positions = (2:5) / 6
+    
+    if(length(values) ==3) #didn't specify max twice
+      values[4] = floor(log.base ^ scale.factor)
+
+
+    heights = calculateBarHeights(values, log.base, scale.factor, one.cat.height, min.height )
+    
+    groblist[[length(groblist) + 1]] = grid.segments(unit(positions, "npc"), 0, unit(positions, "npc"), heights)
+
+
+    groblist
+  }
+
+calculateBarHeights = function(counts, logBase, denom, totHeight)
+  {
+
+
+
+
+  }
 colorScaleBox = function(colpalette, legend.step, groblist = list(), indelcol)
   {
                                         #top text
@@ -764,7 +794,6 @@ colorScaleBox = function(colpalette, legend.step, groblist = list(), indelcol)
     indelxpos = unit(2, "mm") + unit(.7, "strwidth", "indel:") + unit(.5, "mm")
     groblist[[length(groblist) + 1]] = grid.rect(x = indelxpos, y = 1/6,  width = .2, height = 2/9, gp = gpar(col = indelcol, fill = indelcol, alpha = .5), just = "left")
 
-      
     groblist
   }
 
