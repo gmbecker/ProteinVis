@@ -312,7 +312,7 @@ panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
 
 }
 
-panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), vertGuides, lose1 = FALSE, sequence.counts = NULL, ...)
+panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), vertGuides, lose1 = FALSE, sequence.counts = NULL, title, ...)
   {
     if(sum(!is.na(x)) == 0)
       return(TRUE)
@@ -391,16 +391,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  n = myl$samplesize
                                         #browser()
 
-                 if(FALSE)
-                   {
-                 #XXX calculating heights here
-                 if(logscale)
-                    heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor)
-                 else
-                   heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / scale.factor)
-               }
                  heights = calculateBarHeights(counts, logbase, scale.factor)
-
 
                  ypos = as.integer(y) - .5
                  
@@ -456,7 +447,10 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
            } )
            
       }
-        
+    #add the legend!!!
+    makeFullLegend(c(5, 20, 60), colpalette, legend.step, scale.factor, logbase, title, convertY(unit(1, "native"), "mm", valueOnly=TRUE), ylim = c(floor(ylim[2])  - 3 + .5, ylim[2]), yunit= "native")
+    #makeFullLegend = function(values , colpalette, legend.step, scale.factor, log.base, title, one.cat.height,  xlim = c(0, 1), xunit = "npc", ylim = c(0, 1), yunit = "npc", draw.border = TRUE, indelcol ="#00AA00")
+    
     TRUE
   }
 
@@ -617,7 +611,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 
     events = spoofLevelsInDF(events, catname, c("fake1", "fake2", "fake3"), before = FALSE)
 
-    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step, vertGuides = vertGuides, lose1 = lose1, sequence.counts = sequence.counts)
+    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step, vertGuides = vertGuides, lose1 = lose1, sequence.counts = sequence.counts, title=main)
 
     #leg = makeColorLegend(colpalette, scale.factor, legend.step)
     cat.names = levels(events[[catname]])
@@ -658,10 +652,9 @@ combinePlots = function(countPlot, pfamPlot, structPlot,  cat.names, main, subti
         layout.widths = list(
           right.padding = 5,
           left.padding = leftpad)),
-      legend = list(top = list( fun = makeColorLegend, args = list( colpalette = col.palette))),
-      
-      
-      main = main, xlab = subtitle,
+      #legend = list(top = list( fun = makeColorLegend, args = list( colpalette = col.palette))),    
+      #main = main,
+      xlab = subtitle,
       ylab.right = list(label = "mutation counts", vjust = -1, rot = -90,
         y =  1 - panelLayout[3] / ( 2 * sum(panelLayout) ))
       )
@@ -694,7 +687,7 @@ makeFullLegend = function(values , colpalette, legend.step, scale.factor, log.ba
     pushViewport(legvp)
     allgrobs = list()
     if(draw.border)
-      allgrobs[[length(allgrobs) + 1]] = grid.rect( draw=TRUE)  #box the entire area
+      allgrobs[[length(allgrobs) + 1]] = grid.rect( draw=TRUE, gp = gpar(fill= "#FFFFFF"))  #box the entire area
 
     #figure out where the two boxes go.
     
@@ -727,16 +720,16 @@ makeFullLegend = function(values , colpalette, legend.step, scale.factor, log.ba
 
 heightScaleBox = function(values, scale.factor, one.cat.height, log.base, groblist = list())
   {
-    #put lines at positions 2/6, 3/6, 4/6, 5/6 npc
-    positions = (2:5) / 6
+    #put lines at positions 1/5, 2/5, 3/5, 4/5 npc
+    positions = (1:4) / 5
     
     if(length(values) ==3) #didn't specify max twice
       values[4] = floor(log.base ^ scale.factor)
 
 
-    heights = calculateBarHeights(values, log.base, scale.factor, one.cat.height, min.height )
+    heights = calculateBarHeights(values, log.base, scale.factor, one.cat.height)
     
-    groblist[[length(groblist) + 1]] = grid.segments(unit(positions, "npc"), 0, unit(positions, "npc"), heights)
+    groblist[[length(groblist) + 1]] = grid.segments(unit(positions, "npc"), .25, unit(positions, "npc"),unit(.25, "npc") +  unit(heights, "mm"))
 
 
     groblist
@@ -818,7 +811,8 @@ makeColorLegend = function(colpalette)
 
 axis.combined = function(side, ...)
   {
-    packnum = get("packet.number", sys.frame(3))
+    #packnum = get("packet.number", sys.frame(3))
+    packnum = packet.number()
     switch(side,
            left = {
               #This is  a super-hack but it's the only way I have figured out to do it.
@@ -828,7 +822,14 @@ axis.combined = function(side, ...)
                {
                      if(packnum == 3)
                        {
+                         
                          args = list(...)
+                         #get rid of fake labels!
+                         labs = args$components$left$labels$labels
+                         labs[!grepl("(", labs, fixed=TRUE)] = ""
+                         args$components$left$labels$labels = labs
+                         #get rid of fake ticks!
+                         length(args$components$left$ticks$at) = length(args$components$left$ticks$at) - 3
                          args$rot = 0
                          args$components$left$tck = c(0, 0)
                          do.call("axis.default", c(side, args))
