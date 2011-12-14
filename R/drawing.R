@@ -391,12 +391,15 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  n = myl$samplesize
                                         #browser()
 
+                 if(FALSE)
+                   {
                  #XXX calculating heights here
                  if(logscale)
                     heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor)
                  else
                    heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / scale.factor)
-                   
+               }
+                 heights = calculateBarHeights(counts, logbase, scale.factor)
 
 
                  ypos = as.integer(y) - .5
@@ -432,11 +435,15 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                    0
                  else
                    {
+                     calculateBarHeights(x, logbase, scale.factor)
                      #XXX calculating heights here
+                     if(FALSE)
+                       {
                      if(logscale)
                        .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor
                  else
                    .9 * min( x, scale.factor ) / scale.factor
+                   }
                    }
                })
 
@@ -542,15 +549,17 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
  
     if(!is.null(requiredCats))
       {
-        obscats = unique(as.character(events[[catname]]))
-        additcats = obscats[which( !( obscats %in% requiredCats ) )]
-        cats = unique(c(requiredCats, additcats, "fake1", "fake2", "fake3"))
-        charvals = as.character(events[[catname]])
+#        obscats = unique(as.character(events[[catname]]))
+#        additcats = obscats[which( !( obscats %in% requiredCats ) )]
+        #XXX add fake categories last!!!!
+ #       cats = unique(c(requiredCats, additcats, "fake1XXX", "fake2XXX", "fake3XXX"))
+  #      charvals = as.character(events[[catname]])
         
-        events[[catname]] = factor(charvals, levels = cats)
+   #     events[[catname]] = factor(charvals, levels = cats)
 
-        for(reqcat in c( requiredCats, "fake1", "fake2", "fake3") )
-          events[nrow(events) + 1 , catname] = reqcat
+   #     for(reqcat in c( requiredCats, "fake1XXX", "fake2XXX", "fake3XXX") )
+    #      events[nrow(events) + 1 , catname] = reqcat
+        events = spoofLevelsInDF(events, catname, requiredCats)
       }
 
 
@@ -604,13 +613,14 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
       events[[catname]] ,
       function(x) sum(!is.na(x)))
     
-    levels(events[[catname]]) = paste(levels(events[[catname]]), " (", mutcounts, " / ", scounts, ")", sep = "") 
+    levels(events[[catname]]) = paste(levels(events[[catname]]), " (", mutcounts, " / ", scounts, ")", sep = "")
+
+    events = spoofLevelsInDF(events, catname, c("fake1", "fake2", "fake3"), before = FALSE)
 
     countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step, vertGuides = vertGuides, lose1 = lose1, sequence.counts = sequence.counts)
 
     #leg = makeColorLegend(colpalette, scale.factor, legend.step)
     cat.names = levels(events[[catname]])
-    
     combPlot = combinePlots(countPlot, pfamPlot, structPredPlot,  cat.names, main, subtitle, xlim , colpalette)
       
     if(draw)
@@ -732,13 +742,16 @@ heightScaleBox = function(values, scale.factor, one.cat.height, log.base, grobli
     groblist
   }
 
-calculateBarHeights = function(counts, logBase, denom, totHeight)
+calculateBarHeights = function(counts, logBase, denom, totHeight= 1)
   {
+    if(!is.null(logBase)) #we are in log scale
+      heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logBase), denom ) / denom)
+    else
+      heights = sapply(counts, function(x) .9 * min( x, denom ) / denom)
 
-
-
-
+    heights * totHeight
   }
+    
 colorScaleBox = function(colpalette, legend.step, groblist = list(), indelcol)
   {
                                         #top text

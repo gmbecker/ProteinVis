@@ -46,3 +46,25 @@ calcPlotHeight = function(baseheight, type = "metaCount", pfam, categories)
     
     baseheight * (1 + .2 /denom * ( max(bins) - 1) + .2 / denom* (length(unique(categories)) - 5))
   }
+
+spoofLevelsInDF = function(df, colname, newlevs, before = TRUE, force.factor = TRUE)
+  {
+    oldnrow = nrow(df)
+    if(is.factor(df[[colname]]))
+       oldlevs = levels(df[[colname]])
+    else
+      oldlevs = unique(df[[colname]]) #XXX this doesn't seem to give us the right order!!!
+    df[[colname]] = as.character(df[[colname]])
+    
+     if(before)
+      alllevs = unique(c(newlevs, oldlevs))
+    else
+      alllevs = unique(c(oldlevs, newlevs))
+    
+    for(i  in seq(along = newlevs))
+      df[oldnrow + i, colname] = newlevs[i]
+
+    if(force.factor)
+      df[[colname]] = factor(df[[colname]], levels = alllevs)
+    return(df)
+  }
