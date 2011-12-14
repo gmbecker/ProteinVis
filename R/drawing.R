@@ -562,12 +562,12 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
       {
         obscats = unique(as.character(events[[catname]]))
         additcats = obscats[which( !( obscats %in% requiredCats ) )]
-        cats = unique(c(requiredCats, additcats))
+        cats = unique(c(requiredCats, additcats, "fake1", "fake2", "fake3"))
         charvals = as.character(events[[catname]])
         
         events[[catname]] = factor(charvals, levels = cats)
 
-        for(reqcat in requiredCats)
+        for(reqcat in c( requiredCats, "fake1", "fake2", "fake3") )
           events[nrow(events) + 1 , catname] = reqcat
       }
 
@@ -691,6 +691,81 @@ fixPFAM = function(pfam,  labels)
         pfam = NULL
       }
     pfam
+  }
+
+
+makeFullLegend = function(values , colpalette, legend.step, scale.factor, log.base, title, one.cat.height,  xlim = c(0, 1), xunit = "npc", ylim = c(0, 1), yunit = "npc", draw.border = TRUE, indelcol ="#00AA00")
+  {
+    totxwid = diff(xlim)
+    totywid = diff(ylim)
+    legvp = viewport(unit(xlim[1] + totxwid/2, xunit), unit(ylim[1] + totywid / 2, yunit), width = unit(totxwid, xunit), height = unit(totywid, yunit), xscale = xlim, yscale = ylim)
+    pushViewport(legvp)
+    allgrobs = list()
+    if(draw.border)
+      allgrobs[[length(allgrobs) + 1]] = grid.rect( draw=TRUE)  #box the entire area
+
+    #figure out where the two boxes go.
+    
+    xpos2 = convertX( unit(1, "npc") - unit(2, "mm") -unit(.1, "npc"), "npc", valueOnly = TRUE)
+    xwid2 = xwid1 =  .1
+    xpos1 = xpos2 - .1
+
+    height = unit(1, "npc") - unit(4, "mm")
+
+    allgrobs[[length(allgrobs) + 1]] = grid.rect(c(xpos1, xpos2), y = unit(.5, "npc"), width = c(xwid1, xwid2), height = height, draw = TRUE)
+     
+      
+    vp1 = viewport(x = xpos1, y = unit(.5, "npc"), width = xwid1, height = height)
+    vp2 = viewport(x = xpos2, y = unit(.5, "npc"), width = xwid2, height = height)
+
+    #draw colorscale and text
+    pushViewport(vp2)
+
+    allgrobs = colorScaleBox(colpalette, legend.step, allgrobs, indelcol)
+    popViewport(1) #vp2
+
+    pushViewport(vp1)
+    popViewport(1) #vp1
+    allgrobs[[length(allgrobs) + 1]] = grid.text(title, unit(2, "mm"), gp = gpar(fontsize = 24, fontface = "bold"), just = "left")
+    popViewport(1) #legvp
+    do.call(gList, allgrobs)
+  }
+
+colorScaleBox = function(colpalette, legend.step, groblist = list(), indelcol)
+  {
+                                        #top text
+    groblist[[length(groblist) + 1]]  = grid.text("mutation rel. frequency \n(by position and category)", x = .05, y = .95, just = c("left", "top"), gp = gpar(cex = .7))
+    
+                                        #color scale and labels
+    maxpct = ( length(colpalette) -1 ) * legend.step
+    if (maxpct < 1)
+      maxpct = 100 * maxpct
+    maxpct = floor(maxpct) #get an integer
+    maxpctlab = paste(maxpct, "%", sep="")
+    
+    pos = unit(2, "mm")
+    totalColSpace = convertX(unit(1, "npc") - unit(5, "mm") - unit(.7, "strwidth", "0%") - unit(.7, "strwidth", maxpctlab), "npc", valueOnly = TRUE)
+    print(paste("totalColSpace: ", totalColSpace, "\n", "width:", totalColSpace / length(colpalette)))
+    groblist[[length(groblist) + 1]] = grid.text("0%", x = pos, y = 3/6, just = "left", gp = gpar(cex=.7))
+    pos = pos + unit(.7, "strwidth", "0%") + unit(.5, "mm")
+    
+    xpos = convertX(pos, "npc", valueOnly = TRUE)
+    allxpos = xpos + seq(0, by = totalColSpace /length(colpalette), length.out = length(colpalette))
+    print(allxpos)
+    groblist[[length(groblist) + 1]] =
+      grid.rect(x = unit(allxpos, "npc"), y = 3/6, just = "left", width = totalColSpace / length(colpalette), height = 2/9, gp = gpar(fill = colpalette, col=colpalette))
+    pos = pos + unit(totalColSpace, "npc") +  unit(.5, "mm")
+    groblist[[length(groblist) + 1]] = grid.text(maxpctlab, x = pos, y = 3/6, just = "left", gp = gpar(cex=.7))
+                                        #( 0 : length( colpalette ) ) * totalColSpace / length(colpalette), "npc") 
+    
+    #indel legend
+    groblist[[length(groblist) + 1]] = grid.text("indel:", x = unit(2, "mm"), y = 1/6, just = "left", gp=gpar(cex=.7))
+
+    indelxpos = unit(2, "mm") + unit(.7, "strwidth", "indel:") + unit(.5, "mm")
+    groblist[[length(groblist) + 1]] = grid.rect(x = indelxpos, y = 1/6,  width = .2, height = 2/9, gp = gpar(col = indelcol, fill = indelcol, alpha = .5), just = "left")
+
+      
+    groblist
   }
 
 
