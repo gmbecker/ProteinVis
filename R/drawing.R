@@ -312,7 +312,7 @@ panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
 
 }
 
-panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), indel.overlay = FALSE, vertGuides, lose1 = FALSE, sequence.counts = NULL, ...)
+panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), vertGuides, lose1 = FALSE, sequence.counts = NULL, ...)
   {
     if(sum(!is.na(x)) == 0)
       return(TRUE)
@@ -347,18 +347,9 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     yseq = seq(min(as.integer(ylevs), na.rm=TRUE)  , max(as.integer(ylevs), na.rm=TRUE) )
    
     grid.rect(unit(.5, "npc"), unit(yseq, "native"), unit(1, "npc"), unit(1, "native"), gp = gpar(fill = c(rgb(217, 224, 235, max= 255), rgb(205, 205, 205, max = 255)), col = "grey95"))
- #   if(indel.overlay)
- #     {
+ 
         scaleseq = seq(min(as.integer(ylevs), na.rm=TRUE) - .5 , max(as.integer(ylevs), na.rm=TRUE) +.5)
- #       hdenom = scale.factor
-        #grid.segments(unit(0, "npc"), scaleseq, unit(1, "npc"), scaleseq, default.units = "native", gp = gpar(col = c("black"), lex = 1.5))
- #   }
- #   else
- #     {
- #       hdenom = 2 * scale.factor
- #       grid.segments(unit(0, "npc"), yseq, unit(1, "npc"), yseq, default.units = "native", gp = gpar(col = c("black"), lex = 1.5))
- #   }
-
+ 
     ygridseq = seq(min(as.integer(y), na.rm=TRUE) - .5, max(as.integer(y), na.rm=TRUE) + .5, by = 1)
     
     grid.segments(unit(0, "npc"), ygridseq  , unit(1, "npc"), ygridseq, gp = gpar(col = "white"), default.units = "native")
@@ -399,20 +390,17 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  y = myl$y
                  n = myl$samplesize
                                         #browser()
-    
+
+                 #XXX calculating heights here
                  if(logscale)
-                 #  heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / hdenom)
-                   heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor)
+                    heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor)
                  else
-#                   heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / hdenom)
                    heights = sapply(counts, function(x) .9 * min( x, scale.factor ) / scale.factor)
                    
 
-#                 if(indel.overlay)
-                   ypos = as.integer(y) - .5
- #                else
- #                  ypos = as.integer(y)
 
+                 ypos = as.integer(y) - .5
+                 
                  vjust = 0
                  colinds = sapply(p, function(x) min(ceiling(x / legend.step), 11))
 
@@ -456,16 +444,8 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
   
              by(data.frame(x = x.s[useseq], ht = heights[useseq]), covcat[useseq], function(dat)
                 {
-                  drawOneIndel(dat$x, dat$ht, y = y, overlay = indel.overlay)
+                  drawOneIndel(dat$x, dat$ht, y = y)
                 })
-             if(FALSE)
-               {
-                 if(indel.overlay)
-                   indelseq = c(y - .5 + heights, rep(y - .5, times = length(x.s)))
-                 else
-                   indelseq = c(y - heights, rep(y, times = length(x.s)))
-                 grid.polygon(x = unit( c(x.s, rev(x.s) ), "native"), y = unit(  indelseq, "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
-               }
            } )
            
       }
@@ -473,13 +453,11 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     TRUE
   }
 
-drawOneIndel = function(xs, heights, y, overlay)
+drawOneIndel = function(xs, heights, y)
   {
 
-#    if(overlay)
+
       indelseq = c(y - .5 + heights, rep(y - .5, times = length(xs)))
- #   else
-  #    indelseq = c(y - heights, rep(y, times = length(xs)))
     
     grid.polygon(x = unit( c(xs, rev(xs) ), "native"), y = unit(  indelseq, "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
     
@@ -550,7 +528,7 @@ makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposc
     list(hydro = hydroPlot, structPred = structPredPlot, pfam = pfamPlot)
   }
 
-metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle = "Amino Acid Position", draw = FALSE, indel.overlay = TRUE, vertGuides = 10, sequence.counts = NULL)
+metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle = "Amino Acid Position", draw = FALSE, vertGuides = 10, sequence.counts = NULL)
   {
 
     pfam = fixPFAM(pfam, pfamLabels)
@@ -628,7 +606,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     
     levels(events[[catname]]) = paste(levels(events[[catname]]), " (", mutcounts, " / ", scounts, ")", sep = "") 
 
-    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step,  indel.overlay = indel.overlay, vertGuides = vertGuides, lose1 = lose1, sequence.counts = sequence.counts)
+    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step, vertGuides = vertGuides, lose1 = lose1, sequence.counts = sequence.counts)
 
     #leg = makeColorLegend(colpalette, scale.factor, legend.step)
     cat.names = levels(events[[catname]])
