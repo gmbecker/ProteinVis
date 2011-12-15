@@ -455,7 +455,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     #add the legend!!!
     #avoid the lazy evaluation of the damned
     catht = convertY(unit(1, "native"), "mm", valueOnly = TRUE)
-    makeFullLegend(c(5, 20, 60), colpalette, legend.step, scale.factor, logbase, title, catht, ylim = c(floor(ylim[2])  - 2 + .5, ylim[2]), yunit= "native")
+    makeFullLegend(c(5, 15, 45), colpalette, legend.step, scale.factor, logbase, title, catht, ylim = c(floor(ylim[2])  - 2 + .5, ylim[2]), yunit= "native")
     #makeFullLegend = function(values , colpalette, legend.step, scale.factor, log.base, title, one.cat.height,  xlim = c(0, 1), xunit = "npc", ylim = c(0, 1), yunit = "npc", draw.border = TRUE, indelcol ="#00AA00")
     
     TRUE
@@ -534,7 +534,7 @@ makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposc
     list(hydro = hydroPlot, structPred = structPredPlot, pfam = pfamPlot)
   }
 
-metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.67, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle = "Amino Acid Position", draw = FALSE, vertGuides = 10, sequence.counts = NULL)
+metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.506, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle = "Amino Acid Position", draw = FALSE, vertGuides = 10, sequence.counts = NULL)
   {
 
     pfam = fixPFAM(pfam, pfamLabels)
