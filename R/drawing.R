@@ -455,7 +455,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     #add the legend!!!
     #avoid the lazy evaluation of the damned
     catht = convertY(unit(1, "native"), "mm", valueOnly = TRUE)
-    makeFullLegend(c(5, 20, 60), colpalette, legend.step, scale.factor, logbase, title, catht, ylim = c(floor(ylim[2])  - 3 + .5, ylim[2]), yunit= "native")
+    makeFullLegend(c(5, 20, 60), colpalette, legend.step, scale.factor, logbase, title, catht, ylim = c(floor(ylim[2])  - 2 + .5, ylim[2]), yunit= "native")
     #makeFullLegend = function(values , colpalette, legend.step, scale.factor, log.base, title, one.cat.height,  xlim = c(0, 1), xunit = "npc", ylim = c(0, 1), yunit = "npc", draw.border = TRUE, indelcol ="#00AA00")
     
     TRUE
@@ -463,8 +463,6 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
 
 drawOneIndel = function(xs, heights, y)
   {
-
-
       indelseq = c(y - .5 + heights, rep(y - .5, times = length(xs)))
     
     grid.polygon(x = unit( c(xs, rev(xs) ), "native"), y = unit(  indelseq, "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
@@ -616,7 +614,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     
     levels(events[[catname]]) = paste(levels(events[[catname]]), " (", mutcounts, " / ", scounts, ")", sep = "")
 
-    events = spoofLevelsInDF(events, catname, c("fake1", "fake2", "fake3"), before = FALSE)
+    events = spoofLevelsInDF(events, catname, c("fake1", "fake2"), before = FALSE)
 
     countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step, vertGuides = vertGuides, lose1 = lose1, sequence.counts = sequence.counts, title=main)
 
@@ -699,7 +697,7 @@ makeFullLegend = function(values , colpalette, legend.step, scale.factor, log.ba
     #figure out where the two boxes go.
     
     
-    xwid2 = .175
+    xwid2 = .190
     xwid1 =  .15
     xpos2 = convertX( unit(1, "npc") - unit(2, "mm") -unit(xwid2/2, "npc"), "npc", valueOnly = TRUE)
     xpos1 = xpos2 - xwid2 / 2 - xwid1 / 2
