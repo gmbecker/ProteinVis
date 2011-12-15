@@ -44,7 +44,9 @@ calcPlotHeight = function(baseheight, type = "metaCount", pfam, categories)
       .20 + .25 + .25 #the .25 is for the hydro, which isn't in the above plot.
 
     
-    baseheight * (1 + .2 /denom * ( max(bins) - 1) + .2 / denom* (length(unique(categories)) - 5 + 3)) #3 fake cats where the legend lives
+
+    baseheight * (1 + .2 /denom * ( max(bins) - 1) + .2 / denom* (length(unique(categories)) - 5 + 2)) #2 fake categories
+
   }
 
 spoofLevelsInDF = function(df, colname, newlevs, before = TRUE, force.factor = TRUE)
