@@ -344,6 +344,9 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
         y = y[-indels]
       }
     ylevs = unique(y)
+    #get rid of the fake categories we added to make room for the legend they will not have ( as they did not have counts added to them.
+    ylevs = ylevs[grepl("\\(", as.character(ylevs))]
+    
     yseq = seq(min(as.integer(ylevs), na.rm=TRUE)  , max(as.integer(ylevs), na.rm=TRUE) )
    
     grid.rect(unit(.5, "npc"), unit(yseq, "native"), unit(1, "npc"), unit(1, "native"), gp = gpar(fill = c(rgb(217, 224, 235, max= 255), rgb(205, 205, 205, max = 255)), col = "grey95"))
@@ -371,13 +374,14 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
         else
           {
             cat = gsub( " \\(.*", "", as.character(ylev))
-          sampsize = sequence.counts$count[sequence.counts$category == cat]
-            }
+            sampsize = sequence.counts$count[sequence.counts$category == cat]
+          }
+
         counts = sort(table(x), decreasing = TRUE)
-        nonzero = which(sampsize != 0)
-        props = numeric(length(sampsize))
-        props[nonzero] = (counts/sampsize)[nonzero]
-        props[-nonzero] = 0 #XXX should this be 0, or Inf, or NA???
+        if(sampsize == 0)
+          props = rep(0, times = length(counts)) #XXX should this be NA, Inf, ...?
+        else
+          props = counts / sampsize
         list(samplesize = sampsize, proportions = props, x = x, y  = ylev, counts = counts)
       }, x = x, y = y, patid = patientid, haveSC = haveSeqCounts)
 
@@ -389,7 +393,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  p = myl$proportions
                  y = myl$y
                  n = myl$samplesize
-                                        #browser()
+  
 
                  heights = calculateBarHeights(counts, logbase, scale.factor)
 
@@ -397,7 +401,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  
                  vjust = 0
                  colinds = sapply(p, function(x) min(ceiling(x / legend.step), 11))
-
+                 
                  xpos = as.numeric(names(counts))
                  grid.rect(xpos, ypos, vjust = vjust, default.units = "native", width = unit(.5, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
                  #draw cross bar at the top of bars that hit the cap
@@ -424,7 +428,6 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
              
              x.s = seq(min(x$start), max(x$end))
              cov = cov[x.s]
-             print(cov)
              covlag = c(0, cov[-length(cov)])
              covcat =cumsum( (cov > 0) & (covlag == 0) )  
              y = as.integer(x$category[1])
