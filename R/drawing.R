@@ -699,7 +699,7 @@ makeFullLegend = function(values , colpalette, legend.step, scale.factor, log.ba
     #figure out where the two boxes go.
     
     
-    xwid2 = .175
+    xwid2 = .185
     xwid1 =  .15
     xpos2 = convertX( unit(1, "npc") - unit(2, "mm") -unit(xwid2/2, "npc"), "npc", valueOnly = TRUE)
     xpos1 = xpos2 - xwid2 / 2 - xwid1 / 2
