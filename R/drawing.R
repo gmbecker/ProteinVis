@@ -398,8 +398,16 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  vjust = 0
                  colinds = sapply(p, function(x) min(ceiling(x / legend.step), 11))
 
-             
-                 grid.rect(as.numeric(names(counts)), ypos, vjust = vjust, default.units = "native", width = unit(.5, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
+                 xpos = as.numeric(names(counts))
+                 grid.rect(xpos, ypos, vjust = vjust, default.units = "native", width = unit(.5, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
+                 #draw cross bar at the top of bars that hit the cap
+                 
+                 topbars = which(counts >= logbase ^ scale.factor)
+                 if(length(topbars))
+                   {
+                     print("topbars required")
+                     grid.rect(xpos[topbars], ypos + heights[topbars], width = unit(2, "mm"), height = unit(.25, "mm"), default.units = "native", gp = gpar(fill = colpalette[colinds[topbars]], col = colpalette[colinds[topbars]]))
+                   }
                } #else
              #Logic for empty rows here
            })
@@ -420,6 +428,11 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
              covlag = c(0, cov[-length(cov)])
              covcat =cumsum( (cov > 0) & (covlag == 0) )  
              y = as.integer(x$category[1])
+             nonzero = which(cov != 0)
+             heights = rep(0, times=length(cov))
+             heights[nonzero] = calculateBarHeights(cov[nonzero], logbase, scale.factor)
+             if(FALSE)
+               {
              heights = sapply(cov, function(x)
                {
                  if( x == 0)
@@ -427,17 +440,9 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  else
                    {
                      calculateBarHeights(x, logbase, scale.factor)
-                     #XXX calculating heights here
-                     if(FALSE)
-                       {
-                     if(logscale)
-                       .05 + .9 * min( log( x, base = logbase), scale.factor ) / scale.factor
-                 else
-                   .9 * min( x, scale.factor ) / scale.factor
-                   }
                    }
                })
-
+           }
              useseq = which(heights > 0)
   
              by(data.frame(x = x.s[useseq], ht = heights[useseq]), covcat[useseq], function(dat)
@@ -448,7 +453,9 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
            
       }
     #add the legend!!!
-    makeFullLegend(c(5, 20, 60), colpalette, legend.step, scale.factor, logbase, title, convertY(unit(1, "native"), "mm", valueOnly=TRUE), ylim = c(floor(ylim[2])  - 3 + .5, ylim[2]), yunit= "native")
+    #avoid the lazy evaluation of the damned
+    catht = convertY(unit(1, "native"), "mm", valueOnly = TRUE)
+    makeFullLegend(c(5, 20, 60), colpalette, legend.step, scale.factor, logbase, title, catht, ylim = c(floor(ylim[2])  - 3 + .5, ylim[2]), yunit= "native")
     #makeFullLegend = function(values , colpalette, legend.step, scale.factor, log.base, title, one.cat.height,  xlim = c(0, 1), xunit = "npc", ylim = c(0, 1), yunit = "npc", draw.border = TRUE, indelcol ="#00AA00")
     
     TRUE
@@ -529,7 +536,7 @@ makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposc
     list(hydro = hydroPlot, structPred = structPredPlot, pfam = pfamPlot)
   }
 
-metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle = "Amino Acid Position", draw = FALSE, vertGuides = 10, sequence.counts = NULL)
+metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.67, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle = "Amino Acid Position", draw = FALSE, vertGuides = 10, sequence.counts = NULL)
   {
 
     pfam = fixPFAM(pfam, pfamLabels)
@@ -691,17 +698,19 @@ makeFullLegend = function(values , colpalette, legend.step, scale.factor, log.ba
 
     #figure out where the two boxes go.
     
-    xpos2 = convertX( unit(1, "npc") - unit(2, "mm") -unit(.1, "npc"), "npc", valueOnly = TRUE)
-    xwid2 = xwid1 =  .1
-    xpos1 = xpos2 - .1
+    
+    xwid2 = .175
+    xwid1 =  .15
+    xpos2 = convertX( unit(1, "npc") - unit(2, "mm") -unit(xwid2/2, "npc"), "npc", valueOnly = TRUE)
+    xpos1 = xpos2 - xwid2 / 2 - xwid1 / 2
 
     height = unit(1, "npc") - unit(4, "mm")
 
     allgrobs[[length(allgrobs) + 1]] = grid.rect(c(xpos1, xpos2), y = unit(.5, "npc"), width = c(xwid1, xwid2), height = height, draw = TRUE)
      
-      
-    vp1 = viewport(x = xpos1, y = unit(.5, "npc"), width = xwid1, height = height)
-    vp2 = viewport(x = xpos2, y = unit(.5, "npc"), width = xwid2, height = height)
+    yscale = c(convertY(unit(2, "mm"), "native", valueOnly = TRUE), convertY(unit(1, "npc") - unit(2, "mm"), "native", valueOnly = TRUE))
+    vp1 = viewport(x = xpos1, y = unit(.5, "npc"), width = xwid1, height = height, yscale = yscale)
+    vp2 = viewport(x = xpos2, y = unit(.5, "npc"), width = xwid2, height = height, yscale = yscale)
 
     #draw colorscale and text
     pushViewport(vp2)
@@ -713,7 +722,8 @@ makeFullLegend = function(values , colpalette, legend.step, scale.factor, log.ba
     allgrobs = heightScaleBox(values, scale.factor, one.cat.height, log.base, allgrobs)
     popViewport(1) #vp1
     
-    allgrobs[[length(allgrobs) + 1]] = grid.text(title, unit(2, "mm"), gp = gpar(fontsize = 24, fontface = "bold"), just = "left")
+    allgrobs[[length(allgrobs) + 1]] = grid.text(title, unit(2, "mm"), gp = gpar(fontsize = 24, fontfamily = "Helvetica"), #, fontface = "bold"),
+              just = "left")
     popViewport(1) #legvp
     do.call(gList, allgrobs)
   }
@@ -726,19 +736,24 @@ heightScaleBox = function(values, scale.factor, one.cat.height, log.base, grobli
     if(length(values) ==3) #didn't specify max twice
       values[4] = floor(log.base ^ scale.factor)
 
-
     heights = calculateBarHeights(values, log.base, scale.factor, one.cat.height)
-    
+
     groblist[[length(groblist) + 1]] = grid.segments(unit(positions, "npc"), .25, unit(positions, "npc"),unit(.25, "npc") +  unit(heights, "mm"))
+    yTpos = unit(.25, "npc") + unit(max(heights), "mm")
+    Twidth = convertX(unit(2, "mm"), "npc", valueOnly= TRUE)
+    groblist[[length(groblist) + 1]] = grid.lines((4/5  + c(-1, 1)*Twidth), yTpos)
+    htlabs = as.character(values)
+    htlabs[4] = paste(htlabs[4], "+", sep="")
+    groblist[[length(groblist) + 1]] = grid.text(htlabs, positions, .125, gp = gpar(cex=.7))
 
-
+    groblist[[length(groblist) + 1]] = grid.text("mutation counts\n(capped log scale)", x = unit(1, "mm"), y = unit(1, "npc") - unit(1, "mm"), gp = gpar(cex=.7), just = c("left", "top"))
     groblist
   }
 
 calculateBarHeights = function(counts, logBase, denom, totHeight= 1)
   {
     if(!is.null(logBase)) #we are in log scale
-      heights = sapply(counts, function(x) .05 + .9 * min( log( x, base = logBase), denom ) / denom)
+      heights = sapply(counts, function(x) .05 + .875 * min( log( x, base = logBase), denom ) / denom)
     else
       heights = sapply(counts, function(x) .9 * min( x, denom ) / denom)
 
@@ -755,20 +770,19 @@ colorScaleBox = function(colpalette, legend.step, groblist = list(), indelcol)
     if (maxpct < 1)
       maxpct = 100 * maxpct
     maxpct = floor(maxpct) #get an integer
-    maxpctlab = paste(maxpct, "%", sep="")
+    maxpctlab = paste(">", maxpct, "%", sep="")
     
     pos = unit(2, "mm")
     totalColSpace = convertX(unit(1, "npc") - unit(5, "mm") - unit(.7, "strwidth", "0%") - unit(.7, "strwidth", maxpctlab), "npc", valueOnly = TRUE)
-    print(paste("totalColSpace: ", totalColSpace, "\n", "width:", totalColSpace / length(colpalette)))
     groblist[[length(groblist) + 1]] = grid.text("0%", x = pos, y = 3/6, just = "left", gp = gpar(cex=.7))
-    pos = pos + unit(.7, "strwidth", "0%") + unit(.5, "mm")
+    pos = pos + unit(.7, "strwidth", "0%") + unit(1, "mm")
     
     xpos = convertX(pos, "npc", valueOnly = TRUE)
     allxpos = xpos + seq(0, by = totalColSpace /length(colpalette), length.out = length(colpalette))
-    print(allxpos)
     groblist[[length(groblist) + 1]] =
-      grid.rect(x = unit(allxpos, "npc"), y = 3/6, just = "left", width = totalColSpace / length(colpalette), height = 2/9, gp = gpar(fill = colpalette, col=colpalette))
-    pos = pos + unit(totalColSpace, "npc") +  unit(.5, "mm")
+      grid.rect(x = unit(allxpos, "npc"), y = 3/6, hjust = 0, width = totalColSpace / length(colpalette), height = 2/9, gp = gpar(fill = colpalette, col=colpalette))
+    pos = pos + unit(totalColSpace, "npc") +  unit(1, "mm")
+
     groblist[[length(groblist) + 1]] = grid.text(maxpctlab, x = pos, y = 3/6, just = "left", gp = gpar(cex=.7))
                                         #( 0 : length( colpalette ) ) * totalColSpace / length(colpalette), "npc") 
     
