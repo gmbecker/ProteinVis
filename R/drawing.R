@@ -663,7 +663,7 @@ combinePlots = function(countPlot, pfamPlot, structPlot,  cat.names, main, subti
       #legend = list(top = list( fun = makeColorLegend, args = list( colpalette = col.palette))),    
       #main = main,
       xlab = subtitle,
-      ylab.right = list(label = "mutation counts", vjust = -1, rot = -90,
+      ylab.right = list(label = "variant counts", vjust = -1, rot = -90,
         y =  1 - panelLayout[3] / ( 2 * sum(panelLayout) ))
       )
     
@@ -747,7 +747,7 @@ heightScaleBox = function(values, scale.factor, one.cat.height, log.base, grobli
     htlabs[4] = paste(htlabs[4], "+", sep="")
     groblist[[length(groblist) + 1]] = grid.text(htlabs, positions, .125, gp = gpar(cex=.7))
 
-    groblist[[length(groblist) + 1]] = grid.text("mutation counts\n(capped log scale)", x = unit(1, "mm"), y = unit(1, "npc") - unit(1, "mm"), gp = gpar(cex=.7), just = c("left", "top"))
+    groblist[[length(groblist) + 1]] = grid.text("variant counts\n(capped log scale)", x = unit(1, "mm"), y = unit(1, "npc") - unit(1, "mm"), gp = gpar(cex=.7), just = c("left", "top"))
     groblist
   }
 
@@ -764,7 +764,7 @@ calculateBarHeights = function(counts, logBase, denom, totHeight= 1)
 colorScaleBox = function(colpalette, legend.step, groblist = list(), indelcol)
   {
                                         #top text
-    groblist[[length(groblist) + 1]]  = grid.text("mutation rel. frequency \n(by position and category)", x = .05, y = .95, just = c("left", "top"), gp = gpar(cex = .7))
+    groblist[[length(groblist) + 1]]  = grid.text("variant rel. frequency \n(by position and category)", x = .05, y = .95, just = c("left", "top"), gp = gpar(cex = .7))
     
                                         #color scale and labels
     maxpct = ( length(colpalette) -1 ) * legend.step
