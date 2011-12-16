@@ -615,7 +615,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
       events[[catname]] ,
       function(x) sum(!is.na(x)))
     
-    levels(events[[catname]]) = paste(levels(events[[catname]]), " (", mutcounts, " / ", scounts, ")", sep = "")
+    levels(events[[catname]]) = paste(levels(events[[catname]]), " (", mutcounts, " , ", scounts, ")", sep = "")
 
     events = spoofLevelsInDF(events, catname, c("fake1", "fake2"), before = FALSE)
 
