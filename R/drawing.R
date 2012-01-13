@@ -403,7 +403,8 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  colinds = sapply(p, function(x) min(ceiling(x / legend.step), 11))
                  
                  xpos = as.numeric(names(counts))
-                 grid.rect(xpos, ypos, vjust = vjust, default.units = "native", width = unit(.5, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
+                 #grid.rect(xpos, ypos, vjust = vjust, default.units = "native", width = unit(.5, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
+                 grid.rect(xpos, ypos, just=c("center", "bottom"), default.units = "native", width = unit(.5, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
                  #draw cross bar at the top of bars that hit the cap
                  
                  topbars = which(counts >= logbase ^ scale.factor)
@@ -663,7 +664,7 @@ combinePlots = function(countPlot, pfamPlot, structPlot,  cat.names, main, subti
       #legend = list(top = list( fun = makeColorLegend, args = list( colpalette = col.palette))),    
       #main = main,
       xlab = subtitle,
-      ylab.right = list(label = "variant counts", vjust = -1, rot = -90,
+      ylab.right = list(label = "variant counts", vjust = 0, rot = -90,
         y =  1 - panelLayout[3] / ( 2 * sum(panelLayout) ))
       )
     
@@ -841,7 +842,7 @@ axis.combined = function(side, ...)
                          args = list(...)
                          #get rid of fake labels!
                          labs = args$components$left$labels$labels
-                         labs[!grepl("(", labs, fixed=TRUE)] = ""
+                         labs[!grepl("(", labs, fixed=TRUE)] = "."
                          args$components$left$labels$labels = labs
                          #get rid of fake ticks!
                          length(args$components$left$ticks$at) = length(args$components$left$ticks$at) - 3
