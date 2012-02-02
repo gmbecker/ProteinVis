@@ -292,7 +292,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     if(length(subscripts) != length(x))
       stop("Multiple panels are not currently supported. Please contact the maintainer if you need this functionality")
 
-    grid.script(filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
+    
     #lose1 is true if we added a fake x value of 1 to the data.frame to get lattice to get the right plotting limits. It is not real data so we need to remove it.
     if(lose1)
       {
@@ -844,11 +844,15 @@ createProteinImages = function(events,catname = "PRIMARY_TISSUE", requiredCats =
   {
 
     pdf(NULL, height = metaHeight, width = width)
+    
     metaCountStructPlot(events, catname, requiredCats, position, pfam, pfamLabels, structPred, hydro, transMem, sigP, xlim, tmposcol, main, logscale, logbase, scale.factor, colpalette, legend.step, sampleID, subtitle, draw = TRUE, vertGuides, sequence.counts)
+    grid.script(filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
     gridToSVG(metaFileName)
     dev.off()
     pdf(NULL,height = structHeight, width = width)
+    
     proteinStructPlot(pfam, structPred, xlim, tmposcol, main, pfamLabels, TRUE)
+    grid.script(filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
     gridToSVG(structFileName)
     dev.off()
     
