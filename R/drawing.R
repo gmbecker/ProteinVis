@@ -26,7 +26,7 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig, vertGuides, ..
     ylim = current.panel.limits()$ylim
     xlim = current.panel.limits()$xlim
 
-    drawTM(tm, ylim)
+    drawTM(tm, ylim, tmposcols)
     drawSigP(sig, ylim)
     #comes after tm/sigp stuff to deal with alpha issues
     grid.text("Hydrophobicity", unit(2, "mm"), unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.9 ))
@@ -49,7 +49,7 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig, vertGuides, ..
     TRUE
   }
 
-drawTM = function(tm, ylim)
+drawTM = function(tm, ylim, tmposcols)
   {
 
     if(!is.null(tm) && nrow(tm) > 0 )
@@ -268,51 +268,9 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
           TRUE
   }
 
-if(FALSE)
-  {
-panel.metaCountSimple = function(x, y, subscripts, patientid, colpalette, ...)
-  {
-    if(missing(colpalette))
-      cols =  rev(heat.colors(11) )
-    else
-      cols = colpalette
 
-    patientid = patientid[subscripts]
-    grid.rect(.5, .5, 1, 1, gp = gpar(fill = "grey95"))
-    
-    ylevs = unique(y)
-    grid.segments(unit(0, "npc"), ylevs, unit(1, "npc"), ylevs, default.units="native", gp = gpar(col = "grey60"))
-        thing = lapply(ylevs, function(ylev, x, y, patid)
-      {
-        inds = which(y == ylev)
-        
-        x = x[inds]
-        patid = patid[inds]
-        sampsize = length(unique(patid))
-        counts = sort(table(x))
-        non-zeros = which(sampsize != 0)
-        props = counts / sampsize
-        
-        list(samplesize = sampsize, proportions = props, x = x, y  = ylev, counts = counts)
-      }, x = x, y = y, patid = patientid)
 
-    lapply(thing, function(myl)
-           {
-             counts = myl$counts
-             p = myl$proportions
-             y = myl$y
-             n = myl$samplesize
-             
-             #browser()
-             colpos = sapply(p, function(x) min(ceiling(x/.005), 11))
-             grid.circle(as.numeric(names(counts)), y, default.units = "native", 5, gp = gpar(fill = cols[colpos]))
-           })
-    
-  }
-
-}
-
-panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), at.baseline = FALSE,colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005, levels = levels(y), vertGuides, lose1 = FALSE, sequence.counts = NULL, title, ...)
+panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, logscale = FALSE, logbase = exp(1), colpalette = rev(brewer.pal(11, "RdBu")), legend.step = .005,  vertGuides, lose1 = FALSE, sequence.counts = NULL, title, ...)
   {
     if(sum(!is.na(x)) == 0)
       return(TRUE)
@@ -320,6 +278,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
     if(length(subscripts) != length(x))
       stop("Multiple panels are not currently supported. Please contact the maintainer if you need this functionality")
 
+    grid.script(filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
     #lose1 is true if we added a fake x value of 1 to the data.frame to get lattice to get the right plotting limits. It is not real data so we need to remove it.
     if(lose1)
       {
@@ -403,8 +362,20 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  colinds = sapply(p, function(x) min(ceiling(x / legend.step), 11))
                  
                  xpos = as.numeric(names(counts))
-                 #grid.rect(xpos, ypos, vjust = vjust, default.units = "native", width = unit(.5, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
-                 grid.rect(xpos, ypos, just=c("center", "bottom"), default.units = "native", width = unit(.5, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
+
+                 mapply(function(x, y, height, col, count)
+                        {
+                          rec = grid.rect(x, y, just=c("center", "bottom"), default.units = "native", width = unit(.5, "mm"), height, gp = gpar(fill = col, col = col), draw=FALSE)
+                          rec = garnishGrob(rec,
+                                      onmousemove=paste("showTooltip(evt, '",
+                                        paste("position:", x,"  count:", count) , "');",
+                                        sep=""),
+                                      onmouseout="hideTooltip();",
+                            group = FALSE )
+                          grid.draw(rec)
+                        }, xpos, ypos, heights, colpalette[colinds], counts)
+                          
+#                 grid.rect(xpos, ypos, just=c("center", "bottom"), default.units = "native", width = unit(.5, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
                  #draw cross bar at the top of bars that hit the cap
                  
                  topbars = which(counts >= logbase ^ scale.factor)
@@ -435,18 +406,7 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
              nonzero = which(cov != 0)
              heights = rep(0, times=length(cov))
              heights[nonzero] = calculateBarHeights(cov[nonzero], logbase, scale.factor)
-             if(FALSE)
-               {
-             heights = sapply(cov, function(x)
-               {
-                 if( x == 0)
-                   0
-                 else
-                   {
-                     calculateBarHeights(x, logbase, scale.factor)
-                   }
-               })
-           }
+
              useseq = which(heights > 0)
   
              by(data.frame(x = x.s[useseq], ht = heights[useseq]), covcat[useseq], function(dat)
@@ -474,13 +434,12 @@ drawOneIndel = function(xs, heights, y)
     TRUE
   }
  
-proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", draw = FALSE)
+proteinStructPlot = function(pfam, structPred, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", draw = TRUE, vertGuides = 10)
   {
 
     pfam = fixPFAM( pfam , pfamLabels)
        
-    plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels)
-    hydroPlot = plots$hydro
+    plots = makeStructPlots(pfam, structPred, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides)
 
     structPredPlot = plots$structPred
     pfamPlot = plots$pfam
@@ -488,12 +447,15 @@ proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmpo
     cplot = update(
       c(pfamPlot,
         structPredPlot,
-        hydroPlot,
+
         x.same = TRUE),
-      layout = c(1, 3),
+
+      layout = c(1, 2),
       xlim = xlim,
       main = main,
-      par.settings = list(layout.heights = list(panel = c(.55, .55, 1.5))) #only one pfam row now!
+
+      par.settings = list(layout.heights = list(panel = c(.55, .55))), #only one pfam row now!
+      axis = function(...) NULL
       )
     if(draw)
       print(cplot)
@@ -502,14 +464,16 @@ proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmpo
 
   }
 
-makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", cutoff = if(max(structPred$helix > 1)) 6 else .6, vertGuides)
+makeStructPlots = function(pfam, structPred, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", cutoff = if(max(structPred$helix > 1)) 6 else .6, vertGuides = 10)
   {
-
+    #I'll leave this here since we will want it, or something like it,  again eventually
+    if(FALSE)
+      {
     if(dim(hydro)[2] == 0 | is.null(hydro))
       hydro = data.frame(start = numeric(), featureValue = numeric())
 
     hydroPlot = xyplot(featureValue ~ start, type = "l", col = "black", data = hydro, tm = transMem, sig = sigP, xlim = xlim, panel = panel.protstruct, axis = axis.combined, tmposcol = tmposcol, ylab= NULL, vertGuides = vertGuides) 
-
+  }
     if(dim(structPred)[2] == 0 | is.null(structPred))
       structPred = data.frame(start = numeric(), helix = numeric(), strand = numeric() )
     
@@ -535,49 +499,30 @@ makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposc
       }
     pfamPlot = xyplot(bin~start, end = pfam$end,  data= pfam, labs = labs, panel = panel.PFAM, ylab = NULL, xlab = "Amino Acid Position", vertGuides = vertGuides, ylim = ylim, xlim = xlim)
     
-    list(hydro = hydroPlot, structPred = structPredPlot, pfam = pfamPlot)
+    #list(hydro = hydroPlot, structPred = structPredPlot, pfam = pfamPlot)
+    list(structPred = structPredPlot, pfam = pfamPlot)
   }
 
-metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple = FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.506, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, key , subtitle = "Amino Acid Position", draw = FALSE, vertGuides = 10, sequence.counts = NULL)
+metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, logscale = TRUE, logbase = 1.506, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, subtitle = "Amino Acid Position", draw = TRUE, vertGuides = 10, sequence.counts = NULL)
   {
 
     pfam = fixPFAM(pfam, pfamLabels)
     
-    plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides)
+    #plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides)
+    plots = makeStructPlots(pfam, structPred, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides)
     
-    hydroPlot = plots$hydro
+#    hydroPlot = plots$hydro
 
     structPredPlot = plots$structPred
     pfamPlot = plots$pfam
  
     if(!is.null(requiredCats))
       {
-#        obscats = unique(as.character(events[[catname]]))
-#        additcats = obscats[which( !( obscats %in% requiredCats ) )]
-        #XXX add fake categories last!!!!
- #       cats = unique(c(requiredCats, additcats, "fake1XXX", "fake2XXX", "fake3XXX"))
-  #      charvals = as.character(events[[catname]])
-        
-   #     events[[catname]] = factor(charvals, levels = cats)
-
-   #     for(reqcat in c( requiredCats, "fake1XXX", "fake2XXX", "fake3XXX") )
-    #      events[nrow(events) + 1 , catname] = reqcat
         events = spoofLevelsInDF(events, catname, requiredCats)
       }
 
 
-                                        #deal with missing categories (even though there really shouldn't be any!!!!)
-    #this will interfere with matching the passed in sequence counts. We weren't using it anyway, so it's disabled for now
-    if(FALSE)
-      {
-        y = events[[catname]]
-        levs = levels(y)
-        missingCat = which(is.na(y))
-        tmpcat = as.character(y)
-        tmpcat[missingCat] = "UnCategorized"
-        events[[catname]] = factor(tmpcat, levels = c("UnCategorized", levels(events[[catname]])))
-      }
-    #if there are no non-na x values lattice refuses to draw properly
+     #if there are no non-na x values lattice refuses to draw properly
     if( all( is.na( events[[ position[ 1 ] ]] ) ) )
       {
         lose1 = TRUE
@@ -620,7 +565,7 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 
     events = spoofLevelsInDF(events, catname, c("fake1", "fake2"), before = FALSE)
 
-    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, at.baseline = at.baseline, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step, vertGuides = vertGuides, lose1 = lose1, sequence.counts = sequence.counts, title=main)
+    countPlot = xyplot(as.formula(paste(catname, "~", position[1])), end = events$end, data = events, panel = panel.metaCount,  patientid = sampleID, logscale = logscale, scale.factor = scale.factor, logbase = logbase, colpalette = colpalette, legend.step = legend.step, vertGuides = vertGuides, lose1 = lose1, sequence.counts = sequence.counts, title=main)
 
     #leg = makeColorLegend(colpalette, scale.factor, legend.step)
     cat.names = levels(events[[catname]])
@@ -661,8 +606,7 @@ combinePlots = function(countPlot, pfamPlot, structPlot,  cat.names, main, subti
         layout.widths = list(
           right.padding = 5,
           left.padding = leftpad)),
-      #legend = list(top = list( fun = makeColorLegend, args = list( colpalette = col.palette))),    
-      #main = main,
+      
       xlab = subtitle,
       ylab.right = list(label = "variant counts", vjust = 0, rot = -90,
         y =  1 - panelLayout[3] / ( 2 * sum(panelLayout) ))
@@ -870,4 +814,18 @@ drawVertGuides = function(num, col = "black")
                       x1 = unit(myseq, "npc"), gp = gpar(col = col))
       }
     TRUE
+  }
+
+createProteinImages = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, logscale = TRUE, logbase = 1.506, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, subtitle = "Amino Acid Position", vertGuides = 10, sequence.counts = NULL, metaFileName = "VariantPlot.svg", structFileName = "StructurePlot.svg", metaHeight, structHeight, width)
+  {
+
+    pdf(height = metaHeight, width = width)
+    metaCountStructPlot(events, catname, requiredCats, position, pfam, pfamLabels, structPred, hydro, transMem, sigP, xlim, tmposcol, main, logscale, logbase, scale.factor, colpalette, legend.step, sampleID, subtitle, draw = TRUE, vertGuides, sequence.counts)
+    gridToSVG(metaFileName)
+    dev.off()
+    pdf(height = structHeight, width = width)
+    proteinStructPlot(pfam, structPred, xlim, tmposcol, main, pfamLabels, TRUE)
+    gridToSVG(structFileName)
+    dev.off()
+    
   }

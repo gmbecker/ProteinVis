@@ -1,6 +1,7 @@
 \name{metaCountStructPlot}
 \alias{metaCountStructPlot}
 \alias{proteinStructPlot}
+\alias{createProteinImages}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
   Visualize Protein Structure Information With or Without of Events within Meta-Classes
@@ -13,14 +14,25 @@ location and frequency of events along the length of the protein.
 metaCountStructPlot(events, catname = "PRIMARY_TISSUE", requiredCats =
 NULL, position =
 c("protpos", "protposend"), pfam, pfamLabels = "featureName",  structPred, hydro,
-transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, simple
-= FALSE, at.baseline = TRUE, logscale = TRUE, logbase = 1.5,
+transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL,
+ logscale = TRUE, logbase = 1.506,
 scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")),
-legend.step = 0.01, sampleID, key, subtitle, draw = FALSE)
+legend.step = 0.01, sampleID, subtitle, draw = TRUE, vertGuides = 10,
+sequence.counts = NULL)
 
-proteinStructPlot(pfam, structPred, hydro, transMem, sigP, xlim,
-tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName",
-draw = FALSE)
+proteinStructPlot(pfam, structPred, xlim, tmposcol = c("start", "end"),
+main = NULL, pfamLabels = "featureName", draw = TRUE, vertGuides = 10)
+
+createProteinImages(events,catname = "PRIMARY_TISSUE",
+requiredCats = NULL, position = c("protpos", "protposend"),  pfam,
+pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim,
+tmposcol = c("start", "end"), main = NULL, logscale = TRUE,
+logbase = 1.506, scale.factor = 10, colpalette =rev(brewer.pal(11,"RdYlBu")),
+legend.step = .01, sampleID, subtitle = "Amino Acid Position",
+vertGuides = 10, sequence.counts = NULL, metaFileName =
+"VariantPlot.svg", structFileName = "StructurePlot.svg", metaHeight,
+structHeight, width)
+
 }
 
 \arguments{
@@ -47,21 +59,21 @@ the event occured on the protein. The column indicated as the end
   for events spanning more than one position. 
 }
   \item{pfam}{
-data.frame containing PFAM domain data, in the form of columns start,
-end, as well as label information (see pfamLabels)
-}
-\item{pfamLabels}{ 
-  Name of the column in pfam which specifies labels for the domains to
-  print in the image
+    data.frame containing PFAM domain data, in the form of columns start,
+    end, as well as label information (see pfamLabels)
+  }
+  \item{pfamLabels}{ 
+    Name of the column in pfam which specifies labels for the domains to
+    print in the image
   }
   \item{structPred}{
-
+    
     data.frame containing secondary structure predictions. Should
     contain a column "start" which indicates position on the protein, as
     well as columns "helix", "strand", and "coil" representing estimated
     probabilities/confidence (on a scale of 0 to 10) of the respective
     structures at that point.
-}
+  }
   \item{hydro}{
     data.frame containing hydrophobicity data. Should contain a column
     "start" indicating position on the protein and "featureValue"
@@ -85,31 +97,22 @@ end, as well as label information (see pfamLabels)
     Column names in transMem indicating start and end of domain position.
 }
   \item{main}{
-Main title for the entire visualization.
-}
-  \item{simple}{
-Logical. If TRUE, generates a simpler version of the event count
-    plot. Defaults to false.
-}
-  \item{at.baseline}{
-Logical. If TRUE all count bars for a single category have their base at
-    the same point. If FALSE, bars are centered in the area of the plot
-    indicating their respective category. Defaults to TRUE
-}
+    Main title for the entire visualization.
+  }
   \item{logscale}{
-Logical. If TRUE heights of count bars are in capped log scale. Defaults
+    Logical. If TRUE heights of count bars are in capped log scale. Defaults
     to TRUE
 }
   \item{logbase}{
     Numeric. Indicates the base of the log to use if logscale =
-    TRUE. Ignored if logscale=FALSE. Defaults to 1.5.
+    TRUE. Ignored if logscale=FALSE. Defaults to 1.506.
 }
   \item{scale.factor}{
     Numeric. Indicates maximum height of a bar (for values to be
     compared against). Defaults to 10.
 }
   \item{colpalette}{
-Color palette to use in the counting portion of the plot. Color is used
+    Color palette to use in the counting portion of the plot. Color is used
     to indicate relative frequency. Should be a character vector
     containing hex color specifications.
 }
@@ -120,50 +123,61 @@ Color palette to use in the counting portion of the plot. Color is used
     Character. Column name in events which indicates unique sample
     identifier. Used to determine total sample size in a given category.
 }
-  \item{key}{
-    Ignored for now.
-}
   \item{subtitle}{
-    Character. Subtitle for the entire visualization.
+    Character. Subtitle for the entire visualization. Appears below the image.
   }
   \item{draw}{
     Logical. Should the plot be drawn to the active graphics
     device. Defaults to FALSE. If FALSE a trellis object representing the
-    visualization is returned. Currently draw=TRUE does not work.
-    }
-}
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
-\value{
- If draw=FALSE, a trellis
-    object representing the visualization is returned. Currently
-    draw=TRUE does not work (see note).
+    visualization is returned.
+  }
+  \item{vertGuides}{
+    Integer. Number of vertical guidelines to draw in the images. Lines
+    will be equally spaced.
+  }
+  \item{sequence.counts}{
+    data.frame or NULL. Data.frame containing the total number of sequenced
+    samples. This is necessary because not all samples will contain at
+    least one variant, and thus would not appear in
+    \code{events}. Should contain columns "category" and
+    "count". Categories must match those which appear in \code{events}
+    and \code{requiredCats} exactly. Categories with 0 counts but which
+    appear in \code{requiredCats} must be included.
+  }
+  \item{metaFileName}{
+    Character. Indicates location to save the svg of the
+    metaCountStructPlot image.
+  }
+  \item{structFileName}{
+    Character. Indicates location to save the svg of the
+    proteinStructPlot image.
+  }
+  \item{metaHeight}{
+    Numeric. Indicates height desired for variant/structure plot in
+    inches.
+  }
+  \item{structHeight}{
+    Numeric. Indicates height desired for structure only plot in inches.
+  }
+  \item{width}{
+    Numeric. Indicates width desired for both plots in inches.
+  }
 }
 
+\value{
+  In the case of proteinStructPlot and metaCountStructPlot a complex
+  image is generate based on the inputs. A trellis object is returned
+  describing the plot, after being drawn or not as indicated by
+  \code{draw}.
+  
+
+  In the case of createProteinImages, two interactive svg images are
+  created and saved to the harddrive at the locations specified in
+  \code{metaFileName} and \code{structFileName}. The return value for
+  this function is not meaningful.
+  }
 \author{
 Gabriel Becker
 }
-\note{
-  Currently draw=TRUE does not work. This seems to be due to namespace
-  issues in the required latticeExtra.
-
-  To create the plot, simply store the return value of the function
-  while draw=FALSE then call print(<result>).
-  }
-\note{
-
-  Currently, if two estimated TM domains overlap, their union (all
-  positions covered by either estimate) is drawn to the image.
-  %%  ~~further notes~~
-}
-
-
-
-\seealso{
-  \code{\link{proteinStructPlot}}
-  
-}
-
 \keyword{ protein }
 \keyword{ visualization }% __ONLY ONE__ keyword per line
