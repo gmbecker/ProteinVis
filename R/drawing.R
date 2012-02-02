@@ -380,14 +380,17 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  mapply(function(x, y, height, col, count)
                         {
                           rec = grid.rect(x, y, just=c("center", "bottom"), default.units = "native", width = unit(.5, "mm"), height, gp = gpar(fill = col, col = col), draw=FALSE)
-                          addToolTip(rec, 
-                          rec = garnishGrob(rec,paste("position:", x,"  count:", count))
-                                      onmousemove=paste("showTooltip(evt, '",
-                                        paste("position:", x,"  count:", count) , "');",
-                                        sep=""),
-                                      onmouseout="hideTooltip();",
-                            group = FALSE )
-                          grid.draw(rec)
+                          addToolTip(rec, paste("position:", x,"  count:", count))
+                          if(FALSE)
+                            {
+                              rec = garnishGrob(rec,
+                                onmousemove=paste("showTooltip(evt, '",
+                                  paste("position:", x,"  count:", count) , "');",
+                                  sep=""),
+                                onmouseout="hideTooltip();",
+                                group = FALSE )
+                              grid.draw(rec)
+                            }
                         }, xpos, ypos, heights, colpalette[colinds], counts)
                           
 #                 grid.rect(xpos, ypos, just=c("center", "bottom"), default.units = "native", width = unit(.5, "mm"), heights, gp = gpar(fill = colpalette[colinds], col = colpalette[colinds]), )
