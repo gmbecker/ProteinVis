@@ -38,10 +38,12 @@ calcPlotHeight = function(baseheight, type = "metaCount", pfam, categories)
   } else {
     bins = 1
   }
-    denom = if(type == "metaCount")
-      .20 + .25 + 1 #assume 1 pfam row and 5 categories
-    else
-      .20 + .25 + .25 #the .25 is for the hydro, which isn't in the above plot.
+    denom = .20 + .25 + 1 #assume 1 pfam row and 5 categories
+    if (type == "struct") 
+      {
+                                        #.20 + .25 + .25 #the .25 is for the hydro, which isn't in the above plot.
+        categories = NULL
+      }
 
     
 

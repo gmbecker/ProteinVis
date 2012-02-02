@@ -445,9 +445,8 @@ proteinStructPlot = function(pfam, structPred, xlim, tmposcol = c("start", "end"
     pfamPlot = plots$pfam
     
     cplot = update(
-      c(pfamPlot,
-        structPredPlot,
-
+      c(structPredPlot,
+        pfamPlot,
         x.same = TRUE),
 
       layout = c(1, 2),
@@ -455,7 +454,14 @@ proteinStructPlot = function(pfam, structPred, xlim, tmposcol = c("start", "end"
       main = main,
 
       par.settings = list(layout.heights = list(panel = c(.55, .55))), #only one pfam row now!
-      axis = function(...) NULL
+      axis = function(side, ...)
+      {
+        if(side == "bottom")
+          axis.default(side, ...)
+      }
+                       
+
+                      
       )
     if(draw)
       print(cplot)
