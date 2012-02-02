@@ -164,7 +164,8 @@ drawArrow = function(start, end, height, head.height = height*1.6, center.y , na
     xs = c(tstart, tend - thead.length, tend - thead.length, tend, tend - thead.length, tend - thead.length, tstart)
     ys = c(tcenter.y + theight/2, tcenter.y + theight/2, tcenter.y + thead.height/2, tcenter.y, tcenter.y - thead.height/2, tcenter.y - theight/2, tcenter.y - theight/2)
     #draw arrow
-    pic = grid.polygon(xs, unit(ys, "npc"),default.unit = "npc",  gp = gp)
+    pic = grid.polygon(xs, unit(ys, "npc"),default.unit = "npc",  gp = gp, draw = FALSE)
+    addToolTip(pic, paste("Strand - start: ", start, "  end: ", end, sep=""))
  
     pic
   }
@@ -182,7 +183,8 @@ drawCoil = function(start, end, height, center.y, nativelims = current.panel.lim
     theight = height / rangey
     tcenter.y = (center.y - ylim[1]) / rangey
     #draw rect
-    grid.rect(x = tstart, y = unit(tcenter.y - theight/2, "npc"), just = c("left", "bottom"), height = theight, width = tend - tstart, gp = gp, default.unit = "npc")
+    rect = grid.rect(x = tstart, y = unit(tcenter.y - theight/2, "npc"), just = c("left", "bottom"), height = theight, width = tend - tstart, gp = gp, default.unit = "npc", draw=FALSE)
+    addToolTip(rect, paste("Helix - start: ", start, "   end: ", end, sep=""))
     #draw scoring
     #scoring is not perfect but will do for now
     if(tstart + .005 < tend)
@@ -256,11 +258,23 @@ drawPFAM = function(dat, poscolumns = c("start", "end"), labcol = "featureName",
             step = .6/nrow
             ypos = 1 - (.15 / nrow ) - step*bin
             #grid.lines(unit(c(st, end), "native"), unit(nrow - bin + 1, "native"), gp = gpar(col = col, lex = 20, alpha=.5))
-            grid.rect(unit(st, "native"),
+            rect = grid.rect(unit(st, "native"),
                       unit(nrow - bin + 1, "native"),
                       width = unit(end - st, "native"),
                       height = unit(.45, "native"),
-                      just = c("left", "center"), gp = gpar(fill = col, alpha = .5)) 
+                      just = c("left", "center"), gp = gpar(fill = col, alpha = .5), draw = FALSE)
+            addToolTip(rect, paste(fulln, "-","start:", st," end:", end))
+            if(FALSE)
+              {
+                       
+                rect = garnishGrob(rect,
+                  onmousemove=paste("showTooltip(evt, '",
+                    paste(fulln, "-","start:", st,"  end:", end) , "');",
+                          sep=""),
+                  onmouseout="hideTooltip();",
+                  group = FALSE)
+                grid.draw(rect)
+                     }
             grid.text(lab, unit((st + end) /2, "native"), y =textypos, rot = rot, gp = gpar(cex = .67))
 
           },  poscolumns = poscolumns, nrow = nrow, protlen = protlen)
@@ -366,7 +380,8 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  mapply(function(x, y, height, col, count)
                         {
                           rec = grid.rect(x, y, just=c("center", "bottom"), default.units = "native", width = unit(.5, "mm"), height, gp = gpar(fill = col, col = col), draw=FALSE)
-                          rec = garnishGrob(rec,
+                          addToolTip(rec, 
+                          rec = garnishGrob(rec,paste("position:", x,"  count:", count))
                                       onmousemove=paste("showTooltip(evt, '",
                                         paste("position:", x,"  count:", count) , "');",
                                         sep=""),
@@ -834,4 +849,16 @@ createProteinImages = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     gridToSVG(structFileName)
     dev.off()
     
+  }
+
+
+addToolTip= function(grb, txt)
+  {
+    grb = garnishGrob(grb,
+      onmousemove=paste("showTooltip(evt, '",
+        txt, "');",
+        sep=""),
+      onmouseout="hideTooltip();",
+      group = FALSE)
+    grid.draw(grb)
   }
