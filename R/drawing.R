@@ -825,11 +825,11 @@ drawVertGuides = function(num, col = "black")
 createProteinImages = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, logscale = TRUE, logbase = 1.506, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, subtitle = "Amino Acid Position", vertGuides = 10, sequence.counts = NULL, metaFileName = "VariantPlot.svg", structFileName = "StructurePlot.svg", metaHeight, structHeight, width)
   {
 
-    pdf(height = metaHeight, width = width)
+    pdf(NULL, height = metaHeight, width = width)
     metaCountStructPlot(events, catname, requiredCats, position, pfam, pfamLabels, structPred, hydro, transMem, sigP, xlim, tmposcol, main, logscale, logbase, scale.factor, colpalette, legend.step, sampleID, subtitle, draw = TRUE, vertGuides, sequence.counts)
     gridToSVG(metaFileName)
     dev.off()
-    pdf(height = structHeight, width = width)
+    pdf(NULL,height = structHeight, width = width)
     proteinStructPlot(pfam, structPred, xlim, tmposcol, main, pfamLabels, TRUE)
     gridToSVG(structFileName)
     dev.off()
