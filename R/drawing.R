@@ -184,8 +184,10 @@ drawCoil = function(start, end, height, center.y, nativelims = current.panel.lim
     tcenter.y = (center.y - ylim[1]) / rangey
     #draw rect
     rect = grid.rect(x = tstart, y = unit(tcenter.y - theight/2, "npc"), just = c("left", "bottom"), height = theight, width = tend - tstart, gp = gp, default.unit = "npc", draw=FALSE)
+
     addToolTip(rect, paste("Helix - start: ", start, "   end: ", end, sep=""))
-    #draw scoring
+       
+                                        #draw scoring
     #scoring is not perfect but will do for now
     if(tstart + .005 < tend)
       {
@@ -846,13 +848,15 @@ createProteinImages = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     pdf(NULL, height = metaHeight, width = width)
     
     metaCountStructPlot(events, catname, requiredCats, position, pfam, pfamLabels, structPred, hydro, transMem, sigP, xlim, tmposcol, main, logscale, logbase, scale.factor, colpalette, legend.step, sampleID, subtitle, draw = TRUE, vertGuides, sequence.counts)
-    grid.script(filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
+    grid.script(filename = system.file("javascript","tooltip.js", package = "ProteinVis"))
+                #filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
     gridToSVG(metaFileName)
     dev.off()
     pdf(NULL,height = structHeight, width = width)
     
     proteinStructPlot(pfam, structPred, xlim, tmposcol, main, pfamLabels, TRUE)
-    grid.script(filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
+    #grid.script(filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
+    grid.script(filename = system.file("javascript","tooltip.js", package = "ProteinVis"))
     gridToSVG(structFileName)
     dev.off()
     
