@@ -81,12 +81,12 @@ drawSigP = function(sig, ylim)
 panel.psipred = function(x, y, subscripts, cutoff, strand, vertGuides, ...)
   {
     drawVertGuides(vertGuides, "grey80")
-      
     drawPsipred(data.frame(start = x,helix = y, strand = strand), cutoff, current.panel.limits()$xlim)
   }
 
 drawPsipred = function(dat, cutoff, xlim)
   {
+    browser()
     grid.text("Secondary Structure", unit(2, "mm"),unit(1, "npc") -  unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.8 ))
 
     grid.text("strand", unit(2, "mm") + unit(1, "strwidth", data="Secondary Structure") + unit(6, "mm"),unit(1, "npc") -  unit(2, "mm"), just = c("left", "top"), gp = gpar(cex = .9))
@@ -105,22 +105,19 @@ drawPsipred = function(dat, cutoff, xlim)
     height = .3
     grid.lines(unit(xlim, "native"), unit(yline, "npc"), gp = gpar(col = "grey50", lex = 1.5))
     datlag = dat[-1,]
-    
-    change.helix = which((datlag$helix >= cutoff) != (dat$helix[-nrow(dat)] >= cutoff))
-    change.strand = which((datlag$strand >= cutoff) != (dat$strand[-nrow(dat)] >= cutoff))
+   
+    change.helix = findChanges(dat$helix, cutoff)
+    change.strand = findChanges(dat$strand, cutoff)
 
-    if(dat$helix[1] >= cutoff)
-      change.helix = c(1, change.helix)
-
-    if(dat$strand[1] >= cutoff)
-      change.strand = c(1, change.strand)
-    
-    if(dat$helix[nrow(dat)] >= cutoff & !(nrow(dat) %in% change.helix))
-      change.helix = c(change.helix, nrow(dat))
-    
-    if(dat$strand[nrow(dat)] >= cutoff & !(nrow(dat) %in% change.helix))
-      change.strand = c( change.strand , nrow(dat))
-    
+    if(FALSE)
+      {
+        if(dat$strand[1] >= cutoff)
+          change.strand = c(1, change.strand)
+        
+        
+        if(dat$strand[nrow(dat)] >= cutoff & !(nrow(dat) %in% change.helix))
+          change.strand = c( change.strand , nrow(dat))
+      }
     if(length(change.helix) >= 2)
       {
         for(i in seq(1, length(change.helix) - 1, by = 2))
@@ -142,6 +139,20 @@ drawPsipred = function(dat, cutoff, xlim)
     TRUE
   }
 
+findChanges = function(vec, cutoff)
+  {
+    if(length(vec) <= 1)
+      return(numeric())
+    
+    veclag = vec[-1]
+    changes = which((veclag >= cutoff) != (vec[-length(vec)] >= cutoff))
+    if(vec[1] >= cutoff)
+      changes = c(1, changes)
+    if(vec[length(vec)])
+      changes = c(changes, length(vec))
+
+    return(changes)
+  }
 
 drawArrow = function(start, end, height, head.height = height*1.6, center.y , nativelims = current.panel.limits(), head.length = NULL, inlay.x, inlay.y, inlay.col, fill = "white", draw = TRUE, gp = gpar(fill = fill, alpha = .5))
   {
@@ -401,7 +412,6 @@ panel.metaCount = function(x, y, end, subscripts, patientid, scale.factor = 8, l
                  topbars = which(counts >= logbase ^ scale.factor)
                  if(length(topbars))
                    {
-                     print("topbars required")
                      grid.rect(xpos[topbars], ypos + heights[topbars], width = unit(2, "mm"), height = unit(.25, "mm"), default.units = "native", gp = gpar(fill = colpalette[colinds[topbars]], col = colpalette[colinds[topbars]]))
                    }
                } #else
@@ -490,8 +500,9 @@ proteinStructPlot = function(pfam, structPred, xlim, tmposcol = c("start", "end"
 
   }
 
-makeStructPlots = function(pfam, structPred, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", cutoff = if(max(structPred$helix > 1)) 6 else .6, vertGuides = 10)
+makeStructPlots = function(pfam, structPred, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", cutoff , vertGuides = 10)
   {
+
     #I'll leave this here since we will want it, or something like it,  again eventually
     if(FALSE)
       {
@@ -501,8 +512,14 @@ makeStructPlots = function(pfam, structPred, xlim, tmposcol = c("start", "end"),
     hydroPlot = xyplot(featureValue ~ start, type = "l", col = "black", data = hydro, tm = transMem, sig = sigP, xlim = xlim, panel = panel.protstruct, axis = axis.combined, tmposcol = tmposcol, ylab= NULL, vertGuides = vertGuides) 
   }
     if(dim(structPred)[2] == 0 | is.null(structPred))
-      structPred = data.frame(start = numeric(), helix = numeric(), strand = numeric() )
-    
+      {
+        structPred = data.frame(start = NA, helix = NA, strand = NA )
+        if(missing(cutoff))
+          cutoff = 6
+      } else {
+        if(missing(cutoff))
+          cutoff = if(any(structPred$helix>1)) 6 else .6
+      }
     structPredPlot = xyplot(helix ~ start, data = structPred, strand = structPred$strand, cutoff= cutoff, panel= panel.psipred, ylim = c(0, 1), ylab = NULL, xlab = NULL, vertGuides = vertGuides)
 
     #if(dim(pfam)[2] == 0 | is.null(pfam))
@@ -847,7 +864,7 @@ createProteinImages = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 
     pdf(NULL, height = metaHeight, width = width)
     
-    metaCountStructPlot(events, catname, requiredCats, position, pfam, pfamLabels, structPred, hydro, transMem, sigP, xlim, tmposcol, main, logscale, logbase, scale.factor, colpalette, legend.step, sampleID, subtitle, draw = TRUE, vertGuides, sequence.counts)
+    metaCountStructPlot(events, catname, requiredCats, position, pfam, pfamLabels, structPred, hydro, transMem, sigP, xlim, tmposcol , main, logscale, logbase, scale.factor, colpalette, legend.step, sampleID, subtitle, draw = TRUE, vertGuides, sequence.counts)
     grid.script(filename = system.file("javascript","tooltip.js", package = "ProteinVis"))
                 #filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
     gridToSVG(metaFileName)
