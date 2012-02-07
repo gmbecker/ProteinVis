@@ -86,7 +86,6 @@ panel.psipred = function(x, y, subscripts, cutoff, strand, vertGuides, ...)
 
 drawPsipred = function(dat, cutoff, xlim)
   {
-    browser()
     grid.text("Secondary Structure", unit(2, "mm"),unit(1, "npc") -  unit(2, "mm"), just = c("left", "top"), gp = gpar(fontface="bold", cex=.8 ))
 
     grid.text("strand", unit(2, "mm") + unit(1, "strwidth", data="Secondary Structure") + unit(6, "mm"),unit(1, "npc") -  unit(2, "mm"), just = c("left", "top"), gp = gpar(cex = .9))
@@ -835,6 +834,7 @@ axis.combined = function(side, ...)
                          length(args$components$left$ticks$at) = length(args$components$left$ticks$at) - 3
                          args$rot = 0
                          args$components$left$tck = c(0, 0)
+                         args$components$left$text.col = c(rep("white", 2), rep("black", length(labs) - 2))
                          do.call("axis.default", c(side, args))
                        }                 
                }
