@@ -828,7 +828,7 @@ axis.combined = function(side, ...)
                          args = list(...)
                          #get rid of fake labels!
                          labs = args$components$left$labels$labels
-                         labs[!grepl("(", labs, fixed=TRUE)] = "."
+                         labs[!grepl("(", labs, fixed=TRUE)] = " "
                          args$components$left$labels$labels = labs
                          #get rid of fake ticks!
                          length(args$components$left$ticks$at) = length(args$components$left$ticks$at) - 3
