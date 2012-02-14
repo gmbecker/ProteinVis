@@ -803,7 +803,7 @@ makeColorLegend = function(colpalette)
     n = length(colpalette)
     colboxes[[n+1]]= grid.text("0%", x = unit(1*boxwidth, "npc"), y = .3, draw = FALSE, just = c("right", "center"), gp = gpar(cex = .8))
     colboxes[[n+2]]= grid.text(">10%", x = (n + 2)*boxwidth, y = .3, just = c("left", "center"), draw = FALSE, gp = gpar(cex = .8))
-    colboxes[[n+3]] = grid.rect(x = (n + 7) * boxwidth, y = .3, width = boxwidth, height = .4, gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5), draw = FALSE )
+    colboxes[[n+3]] = grid.rect(x = (n + 7) * boxwidth, y = .3, width = boxwidth, height = .4, gp = gpar(col="#00AA00", fill="#00AA00", alpha=.5), draw = FALSE )
     colboxes[[n+4]] = grid.text("indel", x = (n+8) * boxwidth, y = .3, just = c("left", "center"), draw = FALSE, gp = gpar(cex = .8))
     colboxes[[n+5]] = lab
     
