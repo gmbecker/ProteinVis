@@ -458,7 +458,7 @@ drawOneIndel = function(xs, heights, y)
   {
       indelseq = c(y - .5 + heights, rep(y - .5, times = length(xs)))
     
-    grid.polygon(x = unit( c(xs, rev(xs) ), "native"), y = unit(  indelseq, "native"), gp = gpar(stroke=NULL, fill="#00AA00", alpha=.5) )
+    grid.polygon(x = unit( c(xs, rev(xs) ), "native"), y = unit(  indelseq, "native"), gp = gpar(col = "#00AA00", fill="#00AA00", alpha=.5) )
     
     TRUE
   }
