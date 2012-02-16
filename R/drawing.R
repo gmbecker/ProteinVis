@@ -463,35 +463,52 @@ drawOneIndel = function(xs, heights, y)
     TRUE
   }
  
-proteinStructPlot = function(pfam, structPred, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", draw = TRUE, vertGuides = 10)
+proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", draw = TRUE, vertGuides = 10, drawHydro = FALSE)
   {
 
     pfam = fixPFAM( pfam , pfamLabels)
        
-    plots = makeStructPlots(pfam, structPred, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides)
-
-    structPredPlot = plots$structPred
-    pfamPlot = plots$pfam
-    
-    cplot = update(
-      c(structPredPlot,
-        pfamPlot,
-        x.same = TRUE),
-
-      layout = c(1, 2),
-      xlim = xlim,
-      main = main,
-
-      par.settings = list(layout.heights = list(panel = c(.55, .55))), #only one pfam row now!
-      axis = function(side, ...)
+    plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides, drawHydro = drawHydro)
+     if(drawHydro)
       {
-        if(side == "bottom")
-          axis.default(side, ...)
+        axisNums = c(1)
+        axisFuns = list(axis.default)
+        panLayout =  c(.3, .25, .20*2)
+      } else {
+        axisNums = numeric()
+        axisFuns = list()
+        panLayout =  c( .25, .20*2)
       }
-                       
+    
+    cplot = combinePlots(plots, cat.names = NULL, main, subtitle = NULL, xlim , col.palette = NULL, panLayout = panLayout, nms = c("hydro", "struct", "pfam"),  axisNums = axisNums, axisFuns = axisFuns)
 
-                      
-      )
+        
+    if(FALSE)
+      {
+        structPredPlot = plots$structPred
+        pfamPlot = plots$pfam
+        
+        cplot = update(
+          c(structPredPlot,
+            pfamPlot,
+            x.same = TRUE),
+          
+          layout = c(1, 2),
+          xlim = xlim,
+          main = main,
+          
+          par.settings = list(layout.heights = list(panel = c(.55, .55))), #only one pfam row now!
+          axis = function(side, ...)
+          {
+            if(side == "bottom")
+              axis.default(side, ...)
+          }
+          
+          
+          
+          )
+      }
+    
     if(draw)
       print(cplot)
     else
@@ -499,11 +516,12 @@ proteinStructPlot = function(pfam, structPred, xlim, tmposcol = c("start", "end"
 
   }
 
-makeStructPlots = function(pfam, structPred, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", cutoff , vertGuides = 10)
+#makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides)
+makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", cutoff , vertGuides = 10, drawHydro = FALSE)
   {
 
     #I'll leave this here since we will want it, or something like it,  again eventually
-    if(FALSE)
+    if(drawHydro)
       {
     if(dim(hydro)[2] == 0 | is.null(hydro))
       hydro = data.frame(start = numeric(), featureValue = numeric())
@@ -542,18 +560,22 @@ makeStructPlots = function(pfam, structPred, xlim, tmposcol = c("start", "end"),
     pfamPlot = xyplot(bin~start, end = pfam$end,  data= pfam, labs = labs, panel = panel.PFAM, ylab = NULL, xlab = "Amino Acid Position", vertGuides = vertGuides, ylim = ylim, xlim = xlim)
     
     #list(hydro = hydroPlot, structPred = structPredPlot, pfam = pfamPlot)
-    list(structPred = structPredPlot, pfam = pfamPlot)
+    ret = list(struct = structPredPlot, pfam = pfamPlot)
+    if(drawHydro)
+      ret$hydro = hydroPlot
+    ret
   }
 
-metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, logscale = TRUE, logbase = 1.506, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, subtitle = "Amino Acid Position", draw = TRUE, vertGuides = 10, sequence.counts = NULL)
+metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, logscale = TRUE, logbase = 1.506, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, subtitle = "Amino Acid Position", draw = TRUE, vertGuides = 10, sequence.counts = NULL, drawHydro = FALSE)
   {
 
     pfam = fixPFAM(pfam, pfamLabels)
     
-    #plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides)
-    plots = makeStructPlots(pfam, structPred, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides)
-    
-#    hydroPlot = plots$hydro
+    plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides, drawHydro = drawHydro)
+    #plots = makeStructPlots(pfam, structPred, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides)
+
+    #this will be NULL if we didn't draw the hydro plot.
+    hydroPlot = plots$hydro
 
     structPredPlot = plots$structPred
     pfamPlot = plots$pfam
@@ -611,37 +633,72 @@ metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats =
 
     #leg = makeColorLegend(colpalette, scale.factor, legend.step)
     cat.names = levels(events[[catname]])
-    combPlot = combinePlots(countPlot, pfamPlot, structPredPlot,  cat.names, main, subtitle, xlim , colpalette)
-      
+    #combPlot = combinePlots(countPlot, structPlots = plots,  cat.names, main, subtitle, xlim , colpalette)
+     plots$count = countPlot
+    if(drawHydro)
+      {
+        axisNums = c(1, 4)
+        axisFuns = list(axis.default, axisLeft.count)
+        panLayout =  c(.3, .25, .20*2, .20*length(cat.names))
+        rightLabel = list(label = "variant counts", vjust = 0, rot = -90, y =  1 - panLayout[4] / ( 2 * sum(panLayout) ))
+      } else {
+        axisNums = 3
+        axisFuns = list(axisLeft.count)
+        panLayout =  c( .25, .20*2, .20*length(cat.names))
+        rightLabel = list(label = "variant counts", vjust = 0, rot = -90, y =  1 - panLayout[3] / ( 2 * sum(panLayout) ))
+      }
+    
+    combPlot = combinePlots(plots, cat.names, main, subtitle, xlim , colpalette, panLayout = panLayout, axisNums = axisNums, axisFuns = axisFuns, rightLabel = rightLabel)
     if(draw)
       print(combPlot)
     else
       combPlot
   }
 
-combinePlots = function(countPlot, pfamPlot, structPlot,  cat.names, main, subtitle, xlim, col.palette)
+combinePlots = function(plots, cat.names, main, subtitle, xlim, col.palette, panLayout =  c(.25, .20*2, .20*length(cat.names)), nms = c("hydro", "struct", "pfam", "count"), axisNums=3, axisFuns = list(axisLeft.count), rightLabel = NULL)
   {
-  
+
+    combPlot = NULL
+    tracks = 0
+    for(i in nms)
+      {
+        havePlot = !is.null(plots[[ i ]] )
+        if(havePlot)
+          {
+            tracks = tracks + 1
+            if(is.null(combPlot))
+              combPlot = plots[[ i ]]
+            else 
+              combPlot = c(combPlot, plots[[ i ]], x.same = TRUE, y.same = NA)
+          }
+      }
+    if(FALSE)
+      {
     combPlot = c(  #hydroPlot,
       structPlot,
       pfamPlot,
       countPlot,
       x.same=TRUE, y.same=NA)#, merge.legends=TRUE)
-
-    leftpad = max(nchar(cat.names))*.67
-  
+  }
+    #XXX This is supposed to be general! won't always have cat.names
+    if(!is.null(cat.names))
+      leftpad = max(nchar(cat.names))*.67
+    else
+      leftpad = 1
+    
     panelLayout = c(  #.3,
       .25,
       .20*2, #*max(pfamBins, 2),
         .20*length(cat.names))
     combPlot = update(combPlot,
                                         #layout = c(1, 4),
-      layout = c(1, 3),
+      layout = c(1, tracks),
       xlim = xlim,
-      axis = axis.combined,
+      axis = createAxisFun(axisNums, axisFuns),
       par.settings = list(
         layout.heights = list(
-          panel = panelLayout,
+          #panel = panelLayout,
+          panel = panLayout,
           key.top = .20,
           xlab.top = 0,
           axis.top = 0),
@@ -650,8 +707,7 @@ combinePlots = function(countPlot, pfamPlot, structPlot,  cat.names, main, subti
           left.padding = leftpad)),
       
       xlab = subtitle,
-      ylab.right = list(label = "variant counts", vjust = 0, rot = -90,
-        y =  1 - panelLayout[3] / ( 2 * sum(panelLayout) ))
+      ylab.right = rightLabel
       )
     
     return(combPlot)
@@ -846,6 +902,50 @@ axis.combined = function(side, ...)
             )
    }
 
+axisLeft.count = function(side, ...)
+  {
+
+    args = list(...)
+                                        #get rid of fake labels!
+    labs = args$components$left$labels$labels
+    labs[!grepl("(", labs, fixed=TRUE)] = " "
+    args$components$left$labels$labels = labs
+                                        #get rid of fake ticks!
+    length(args$components$left$ticks$at) = length(args$components$left$ticks$at) - 3
+    args$rot = 0
+    args$components$left$tck = c(0, 0)
+    do.call("axis.default", c(side, args))
+  }
+
+createAxisFun = function(nums, funs)
+  {
+    axis.created = function(side, ...)
+      {
+
+        packnum = packet.number()
+        switch(side,
+               left = {
+              #This is  a super-hack but it's the only way I have figured out to do it.
+             #It is likely that this will fail if we ever try to do a conditional form of these plots
+                 for(i in seq(along=nums))
+                   {
+                     if(packnum == nums[i])
+                       funs[[i]](side, ...)
+                   }
+           },
+            bottom = {
+              axis.default(side , ...)
+            }
+         
+            )
+  
+         }
+
+    return(axis.created)
+  }
+
+
+
 drawVertGuides = function(num, col = "black")
   {
 
@@ -871,7 +971,7 @@ createProteinImages = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     dev.off()
     pdf(NULL,height = structHeight, width = width)
     
-    proteinStructPlot(pfam, structPred, xlim, tmposcol, main, pfamLabels, TRUE)
+    proteinStructPlot(pfam, structPred, transMem, sigP, xlim, tmposcol, main, pfamLabels, TRUE)
     #grid.script(filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
     grid.script(filename = system.file("javascript","tooltip.js", package = "ProteinVis"))
     gridToSVG(structFileName)
