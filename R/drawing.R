@@ -20,7 +20,7 @@ axis.protstruct <-
            )
   }
 
-panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig, vertGuides, ... )
+panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig, vertGuides, smoothHydro = TRUE, ... )
   {
 
     ylim = current.panel.limits()$ylim
@@ -41,7 +41,9 @@ panel.protstruct <- function(x,y, subscripts, tmposcols, tm, sig, vertGuides, ..
     grid.text("Transmembrane Domain Prediction", pos, unit(1, "npc") - unit(2, "mm"), just = c("left", "top"), gp = gpar( cex=.9 ))
     pos = pos + unit(.8, "strwidth", "Transmembrane Domain Prediction") 
     grid.rect(pos, unit(1, "npc") - unit(2, "mm"), unit(1, "char"), unit(.9, "char"),gp = gpar(fill = "grey75", alpha = .5, col = "white"), just = c("left", "top"))
-    
+
+    if(smoothHydro)
+      y = ksmooth(x, y, bandwidth =5, kernel = "normal")$y
               
     #This may get rid of the problem with hydrophobicity not plotting correctly. Not sure, I need to get the data from cory.
     if(length(x))
@@ -463,21 +465,21 @@ drawOneIndel = function(xs, heights, y)
     TRUE
   }
  
-proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", draw = TRUE, vertGuides = 10, drawHydro = FALSE)
+proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", draw = TRUE, vertGuides = 10, drawHydro = FALSE, smoothHydro = FALSE)
   {
 
     pfam = fixPFAM( pfam , pfamLabels)
        
-    plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides, drawHydro = drawHydro)
+    plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides, drawHydro = drawHydro, smoothHydro = smoothHydro)
      if(drawHydro)
       {
         axisNums = c(1)
         axisFuns = list(axis.default)
-        panLayout =  c(.3, .25, .20*2)
+        panLayout =  c(.3, .25, .30)
       } else {
         axisNums = numeric()
         axisFuns = list()
-        panLayout =  c( .25, .20*2)
+        panLayout =  c( .25, .3)
       }
     
     cplot = combinePlots(plots, cat.names = NULL, main, subtitle = NULL, xlim , col.palette = NULL, panLayout = panLayout, nms = c("hydro", "struct", "pfam"),  axisNums = axisNums, axisFuns = axisFuns)
@@ -517,7 +519,7 @@ proteinStructPlot = function(pfam, structPred, hydro, transMem, sigP, xlim, tmpo
   }
 
 #makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides)
-makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", cutoff , vertGuides = 10, drawHydro = FALSE)
+makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, pfamLabels = "featureName", cutoff , vertGuides = 10, drawHydro = FALSE, smoothHydro = FALSE)
   {
 
     #I'll leave this here since we will want it, or something like it,  again eventually
@@ -526,7 +528,7 @@ makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposc
     if(dim(hydro)[2] == 0 | is.null(hydro))
       hydro = data.frame(start = numeric(), featureValue = numeric())
 
-    hydroPlot = xyplot(featureValue ~ start, type = "l", col = "black", data = hydro, tm = transMem, sig = sigP, xlim = xlim, panel = panel.protstruct, axis = axis.combined, tmposcol = tmposcol, ylab= NULL, vertGuides = vertGuides) 
+    hydroPlot = xyplot(featureValue ~ start, type = "l", col = "black", data = hydro, tm = transMem, sig = sigP, xlim = xlim, panel = panel.protstruct, axis = axis.combined, tmposcol = tmposcol, ylab= NULL, vertGuides = vertGuides, smoothHydro=smoothHydro) 
   }
     if(dim(structPred)[2] == 0 | is.null(structPred))
       {
