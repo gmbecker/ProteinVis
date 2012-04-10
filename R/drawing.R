@@ -568,12 +568,12 @@ makeStructPlots = function(pfam, structPred, hydro, transMem, sigP, xlim, tmposc
     ret
   }
 
-metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, logscale = TRUE, logbase = 1.506, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, subtitle = "Amino Acid Position", draw = TRUE, vertGuides = 10, sequence.counts = NULL, drawHydro = FALSE)
+metaCountStructPlot = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, logscale = TRUE, logbase = 1.506, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, subtitle = "Amino Acid Position", draw = TRUE, vertGuides = 10, sequence.counts = NULL, drawHydro = FALSE, smoothHydro = FALSE)
   {
 
     pfam = fixPFAM(pfam, pfamLabels)
     
-    plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides, drawHydro = drawHydro)
+    plots = makeStructPlots(pfam, structPred, hydro, transMem, sigP, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides, drawHydro = drawHydro, smoothHydro = smoothHydro)
     #plots = makeStructPlots(pfam, structPred, xlim, tmposcol, pfamLabels = pfamLabels, vertGuides = vertGuides)
 
     #this will be NULL if we didn't draw the hydro plot.
@@ -961,21 +961,22 @@ drawVertGuides = function(num, col = "black")
     TRUE
   }
 
-createProteinImages = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, logscale = TRUE, logbase = 1.506, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, subtitle = "Amino Acid Position", vertGuides = 10, sequence.counts = NULL, metaFileName = "VariantPlot.svg", structFileName = "StructurePlot.svg", metaHeight, structHeight, width)
+createProteinImages = function(events,catname = "PRIMARY_TISSUE", requiredCats = NULL, position = c("protpos", "protposend"),  pfam, pfamLabels = "featureName",structPred, hydro, transMem, sigP, xlim, tmposcol = c("start", "end"), main = NULL, logscale = TRUE, logbase = 1.506, scale.factor = 10, colpalette = rev(brewer.pal(11, "RdYlBu")), legend.step = .01, sampleID, subtitle = "Amino Acid Position", vertGuides = 10, sequence.counts = NULL, metaFileName = "VariantPlot.svg", structFileName = "StructurePlot.svg", metaHeight, structHeight, width, jsLocation = system.file("javascript", package="ProteinVis"), drawHydro = FALSE, smoothHydro=FALSE)
   {
 
     pdf(NULL, height = metaHeight, width = width)
     
-    metaCountStructPlot(events, catname, requiredCats, position, pfam, pfamLabels, structPred, hydro, transMem, sigP, xlim, tmposcol , main, logscale, logbase, scale.factor, colpalette, legend.step, sampleID, subtitle, draw = TRUE, vertGuides, sequence.counts)
-    grid.script(filename = system.file("javascript","tooltip.js", package = "ProteinVis"))
+    metaCountStructPlot(events, catname, requiredCats, position, pfam, pfamLabels, structPred, hydro, transMem, sigP, xlim, tmposcol , main, logscale, logbase, scale.factor, colpalette, legend.step, sampleID, subtitle, draw = TRUE, vertGuides, sequence.counts, drawHydro = drawHydro, smoothHydro = smoothHydro)
+    grid.script(filename = system.file(file.path(jsLocation, "tooltip.js" )))
                 #filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
     gridToSVG(metaFileName)
     dev.off()
     pdf(NULL,height = structHeight, width = width)
     
-    proteinStructPlot(pfam, structPred, transMem, sigP, xlim, tmposcol, main, pfamLabels, TRUE)
+    proteinStructPlot(pfam, structPred, trasMem, sigP, xlim, tmposcol, main, pfamLabels, TRUE, drawHydro = drawHydro, smoothHydro = smoothHydro)
     #grid.script(filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
-    grid.script(filename = system.file("javascript","tooltip.js", package = "ProteinVis"))
+    grid.script(filename = system.file(file.path(jsLocation, "tooltip.js" )))
+    #grid.script(filename = system.file("javascript","tooltip.js", package = "ProteinVis"))
     gridToSVG(structFileName)
     dev.off()
     
