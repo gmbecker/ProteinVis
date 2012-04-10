@@ -967,15 +967,15 @@ createProteinImages = function(events,catname = "PRIMARY_TISSUE", requiredCats =
     pdf(NULL, height = metaHeight, width = width)
     
     metaCountStructPlot(events, catname, requiredCats, position, pfam, pfamLabels, structPred, hydro, transMem, sigP, xlim, tmposcol , main, logscale, logbase, scale.factor, colpalette, legend.step, sampleID, subtitle, draw = TRUE, vertGuides, sequence.counts, drawHydro = drawHydro, smoothHydro = smoothHydro)
-    grid.script(filename = system.file(file.path(jsLocation, "tooltip.js" )))
+    grid.script(filename = file.path(jsLocation, "tooltip.js" ))
                 #filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
     gridToSVG(metaFileName)
     dev.off()
     pdf(NULL,height = structHeight, width = width)
     
-    proteinStructPlot(pfam, structPred, trasMem, sigP, xlim, tmposcol, main, pfamLabels, TRUE, drawHydro = drawHydro, smoothHydro = smoothHydro)
+    proteinStructPlot(pfam = pfam, structPred = structPred, transMem = trasMem, sigP = sigP, xlim = xlim, tmposcol = tmposcol, main = main, pfamLabels = pfamLabels, draw = TRUE, drawHydro = drawHydro, smoothHydro = smoothHydro)
     #grid.script(filename="http://www.stat.auckland.ac.nz/~paul/Talks/NZSA2011/tooltip.js")
-    grid.script(filename = system.file(file.path(jsLocation, "tooltip.js" )))
+    grid.script(filename = file.path(jsLocation, "tooltip.js" ))
     #grid.script(filename = system.file("javascript","tooltip.js", package = "ProteinVis"))
     gridToSVG(structFileName)
     dev.off()
